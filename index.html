@@ -1,0 +1,2313 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>V2RAY TopUp & VPN Portal</title>
+  
+  <!-- Website Favicon Logo -->
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (window.tailwind) {
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af' },
+              dark: { 950: '#070b14', 900: '#0b1120', 800: '#111827', 750: '#151f32', 700: '#1e293b' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    html.dark body { background-color: #070b14; color: #f3f4f6; }
+    html:not(.dark) body { background-color: #f8fafc; color: #0f172a; }
+
+    /* Glass cards adapted for dark and light modes */
+    html.dark .glass-card { background: rgba(17, 24, 39, 0.94); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    html:not(.dark) .glass-card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.05); }
+
+    /* Inputs adapted for both modes */
+    html.dark .glass-input { background: #0b1120; border: 1px solid #1e293b; color: #fff; }
+    html:not(.dark) .glass-input { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }
+    .glass-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25); }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+    .animate-pulse-dot { animation: pulse-dot 1.2s infinite ease-in-out; }
+    
+    .stat-card-clickable { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    html.dark .stat-card-clickable:hover {
+      border-color: rgba(59, 130, 246, 0.45);
+      background: rgba(21, 31, 50, 0.96);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px -3px rgba(59, 130, 246, 0.15);
+    }
+    html:not(.dark) .stat-card-clickable:hover {
+      border-color: rgba(59, 130, 246, 0.45);
+      background: #f1f5f9;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+    .stat-card-clickable:active { transform: scale(0.98); }
+
+    /* Animated GB Progress Bar with shimmer effect */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .progress-neon-glow {
+      background: linear-gradient(90deg, #10b981 0%, #34d399 25%, #6ee7b7 50%, #34d399 75%, #10b981 100%);
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite linear;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.85), 0 0 24px rgba(52, 211, 153, 0.4);
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes pop-bounce {
+      0% { transform: scale(0.85); opacity: 0; }
+      70% { transform: scale(1.03); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-bounce { animation: pop-bounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+    /* Custom SIM Tab Button Styling */
+    .sim-tab-btn {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sim-tab-btn:hover {
+      transform: translateY(-2px);
+    }
+    .sim-tab-btn.active {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.12);
+      box-shadow: 0 4px 15px -2px rgba(59, 130, 246, 0.3);
+    }
+    .sim-tab-btn.active .sim-logo-ring {
+      border-color: #3b82f6;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+      transform: scale(1.05);
+    }
+    .sim-tab-btn.active .sim-tab-label {
+      color: #3b82f6;
+      font-weight: 700;
+    }
+
+    /* Promotion Banner Gradient Pulse */
+    .promo-banner {
+      position: relative;
+      overflow: hidden;
+    }
+    .promo-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+  </style>
+
+  <!-- Firebase Compatibility SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="min-h-screen flex flex-col antialiased select-none pb-16 sm:pb-0">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-3"></div>
+
+  <!-- Global Loader Modal -->
+  <div id="global-loader" style="display: none;" class="fixed inset-0 bg-white/85 dark:bg-dark-950/85 z-50 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
+    <div class="flex flex-col items-center gap-3 p-6 glass-card rounded-2xl border border-brand-300 dark:border-brand-500/40 shadow-2xl">
+      <div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+      <p id="loader-text" class="text-xs font-semibold text-gray-800 dark:text-gray-200">Processing...</p>
+    </div>
+  </div>
+
+  <!-- UNIVERSAL CONFIRMATION / ALERT POPUP MODAL -->
+  <div id="modal-universal-alert" style="display: none;" class="fixed inset-0 bg-white/85 dark:bg-dark-950/85 z-50 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full rounded-3xl p-6 border-2 border-brand-300 dark:border-brand-500/50 shadow-2xl text-center space-y-4 animate-pop-bounce relative overflow-hidden">
+      <div id="modal-alert-icon-box" class="w-16 h-16 rounded-3xl bg-brand-100 dark:bg-brand-500/20 border-2 border-brand-300 dark:border-brand-500/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-3xl mx-auto shadow-lg">
+        <i id="modal-alert-icon" class="fa-solid fa-circle-exclamation"></i>
+      </div>
+      <div>
+        <h3 id="modal-alert-title" class="text-base font-bold text-gray-900 dark:text-white">Notification</h3>
+        <p id="modal-alert-desc" class="text-xs text-gray-600 dark:text-gray-400 mt-1">Information will be shown here</p>
+      </div>
+      <div id="modal-alert-buttons" class="flex gap-2 pt-2">
+        <button id="modal-alert-btn-cancel" class="flex-1 py-2.5 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold">Cancel</button>
+        <button id="modal-alert-btn-confirm" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-brand-600/30">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REAL-TIME TOPUP APPROVED CELEBRATION POPUP -->
+  <div id="modal-topup-celebration" style="display: none;" class="fixed inset-0 bg-white/90 dark:bg-dark-950/90 z-50 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full rounded-3xl p-6 border-2 border-emerald-400 dark:border-emerald-500/60 shadow-[0_0_50px_rgba(16,185,129,0.3)] text-center space-y-4 animate-pop-bounce relative overflow-hidden">
+      <div class="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-300 dark:border-emerald-500/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-500/30">
+        <i class="fa-solid fa-coins animate-bounce"></i>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/30">TopUp Approved</span>
+        <h3 class="text-base font-bold mt-1 text-gray-900 dark:text-white">TopUp Successful! 🎉</h3>
+        <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Admin has approved your top-up request.</p>
+      </div>
+      <div class="py-3 px-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-500/30">
+        <p class="text-[11px] text-gray-600 dark:text-gray-400">Amount Received</p>
+        <h2 id="topup-celebrate-amount" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono tracking-tight my-1">+0.00 THB</h2>
+        <p id="topup-celebrate-tx" class="text-[10px] font-mono text-gray-500 dark:text-gray-400">TXN-000000</p>
+      </div>
+      <div class="text-left bg-gray-50 dark:bg-dark-900/80 p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-xs flex justify-between items-center">
+        <span class="text-gray-600 dark:text-gray-400">Current Balance:</span>
+        <span id="topup-celebrate-newbal" class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">0.00 THB</span>
+      </div>
+      <button onclick="closeTopUpCelebrationModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-600/30">
+        <i class="fa-solid fa-check mr-1"></i> Okay (Accept)
+      </button>
+    </div>
+  </div>
+
+  <!-- Slip View Modal -->
+  <div id="modal-slip-preview" style="display: none;" class="fixed inset-0 bg-white/85 dark:bg-dark-950/85 z-50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-4 border border-gray-200 dark:border-gray-700 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-800">
+        <h4 class="text-xs font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-receipt text-brand-600 dark:text-brand-400 mr-2"></i>Payment Slip Preview</h4>
+        <button onclick="closeSlipModal()" class="w-7 h-7 rounded-full bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center justify-center text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="py-3 flex items-center justify-center max-h-[70vh] overflow-hidden">
+        <img id="modal-slip-img" src="" alt="Slip Preview" class="max-h-full max-w-full rounded-xl object-contain shadow-lg border border-gray-200 dark:border-gray-800" />
+      </div>
+      <button onclick="closeSlipModal()" class="w-full py-2 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-semibold">Close</button>
+    </div>
+  </div>
+
+  <!-- QR Code View Modal -->
+  <div id="modal-qr-preview" style="display: none;" class="fixed inset-0 bg-white/90 dark:bg-dark-950/90 z-50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-brand-300 dark:border-brand-500/40 shadow-2xl text-center space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-2">
+        <h4 id="qr-modal-title" class="text-xs font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-qrcode text-brand-600 dark:text-brand-400 mr-2"></i>Scan QR Code</h4>
+        <button onclick="closeQrModal()" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="bg-white p-3 rounded-2xl inline-block shadow-inner mx-auto">
+        <img id="qr-modal-img" src="" alt="QR" class="w-52 h-52 object-contain mx-auto" />
+      </div>
+      <p id="qr-modal-sub" class="text-[11px] text-gray-500 dark:text-gray-400">You can transfer money by scanning this QR code via your Bank App.</p>
+      <button onclick="closeQrModal()" class="w-full py-2.5 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold">Close</button>
+    </div>
+  </div>
+
+  <!-- MODAL: BUY VPN ACCOUNT WITH EXACT SELECTED SERVER FLAG, NAME & SIM LOGO -->
+  <div id="modal-buy-vpn" style="display: none;" class="fixed inset-0 bg-white/90 dark:bg-dark-950/90 z-50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="glass-card max-w-md w-full rounded-3xl p-5 sm:p-6 border border-brand-300 dark:border-brand-500/40 shadow-2xl space-y-4 my-6">
+      
+      <!-- Top Header with Selected Server's Flag & Name -->
+      <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
+        <div class="flex items-center gap-3">
+          <!-- Dynamic Server Flag Container -->
+          <div id="buy-srv-flag-box" class="w-11 h-11 rounded-full overflow-hidden border-2 border-brand-500/40 bg-gray-100 dark:bg-dark-900 flex items-center justify-center shrink-0 shadow-md p-0.5">
+            <img id="buy-srv-flag-img" src="https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png" alt="Server Flag" class="w-full h-full object-cover rounded-full" />
+            <span id="buy-srv-flag-emoji" class="text-2xl hidden">🌐</span>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h4 class="text-sm font-bold text-gray-900 dark:text-white">Buy V2RAY Account</h4>
+            </div>
+            <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span id="buy-srv-sub" class="text-xs font-bold text-brand-600 dark:text-brand-400">Server Name</span>
+              <span id="buy-sim-tag-box">
+                <!-- Dynamic SIM Badge injected by JS -->
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="closeBuyModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center justify-center text-sm transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Verified Confirmation Card -->
+      <div class="p-3 bg-brand-50/60 dark:bg-brand-500/10 rounded-2xl border border-brand-200 dark:border-brand-500/20 flex items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+          <div>
+            <p class="text-[10px] text-gray-500 dark:text-gray-400">Selected Node:</p>
+            <p id="buy-confirm-srv-name" class="font-bold text-gray-900 dark:text-white text-xs truncate max-w-[190px]">Server Node</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span id="buy-confirm-rate" class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+            6 GB = 1฿
+          </span>
+        </div>
+      </div>
+
+      <!-- Custom GB Slider Section -->
+      <div class="space-y-3 bg-gray-50 dark:bg-dark-900/60 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+        <div class="flex justify-between items-center">
+          <label id="slider-gb-label" class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-database text-brand-600 dark:text-brand-400"></i>
+            <span>Select GB Amount:</span>
+          </label>
+          <span id="slider-gb-val" class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">60 GB</span>
+        </div>
+
+        <input type="range" id="vpn-gb-slider" min="6" max="1200" step="6" value="60" oninput="onVpnGbSliderChange(this.value)" class="w-full accent-brand-500 cursor-pointer h-2 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+
+        <div class="grid grid-cols-4 gap-1.5 pt-1">
+          <button type="button" id="preset-btn-1" onclick="setVpnGbPreset(6)" class="py-1.5 bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-lg text-[10px] font-semibold text-brand-600 dark:text-brand-400">6 GB</button>
+          <button type="button" id="preset-btn-2" onclick="setVpnGbPreset(120)" class="py-1.5 bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-lg text-[10px] font-semibold text-gray-700 dark:text-gray-300">120 GB</button>
+          <button type="button" id="preset-btn-3" onclick="setVpnGbPreset(300)" class="py-1.5 bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-lg text-[10px] font-semibold text-gray-700 dark:text-gray-300">300 GB</button>
+          <button type="button" id="preset-btn-4" onclick="setVpnGbPreset(600)" class="py-1.5 bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-lg text-[10px] font-semibold text-gray-700 dark:text-gray-300">600 GB</button>
+        </div>
+
+        <!-- Calculated Summary Box -->
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200 dark:border-gray-800 text-xs">
+          <div class="bg-white dark:bg-dark-950/60 p-2.5 rounded-xl border border-gray-200 dark:border-gray-800">
+            <p class="text-[10px] text-gray-500 dark:text-gray-400">Price (ကျသင့်ငွေ)</p>
+            <p id="slider-calc-price" class="font-bold text-emerald-600 dark:text-emerald-400 text-sm font-mono mt-0.5">10.00 THB</p>
+          </div>
+          <div class="bg-white dark:bg-dark-950/60 p-2.5 rounded-xl border border-gray-200 dark:border-gray-800">
+            <p class="text-[10px] text-gray-500 dark:text-gray-400">Duration (သက်တမ်း)</p>
+            <p id="slider-calc-duration" class="font-bold text-brand-700 dark:text-brand-300 text-xs font-mono mt-0.5">10 Days</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Client Remark (Name):</label>
+        <input type="text" id="buy-client-name" class="w-full p-2.5 glass-input rounded-xl text-xs" placeholder="e.g. User-Phone" />
+      </div>
+
+      <div class="p-3 bg-gray-50 dark:bg-dark-950/70 rounded-xl border border-gray-200 dark:border-gray-800 flex justify-between items-center text-xs">
+        <span class="text-gray-600 dark:text-gray-400">Your Balance:</span>
+        <span id="buy-my-balance" class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">0.00 THB</span>
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeBuyModal()" class="flex-1 py-2.5 bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold hover:bg-gray-200">Cancel</button>
+        <button onclick="confirmPurchaseVpn()" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-brand-600/30 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-cart-shopping"></i> Confirm Purchase
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SUCCESS CONFIG POP-UP -->
+  <div id="modal-config-success" style="display: none;" class="fixed inset-0 bg-white/90 dark:bg-dark-950/90 z-50 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-3xl p-6 border border-emerald-300 dark:border-emerald-500/40 shadow-2xl space-y-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mx-auto">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-gray-900 dark:text-white">Account Created Successfully! 🎉</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Client has been added to X-UI Inbound.</p>
+      </div>
+      <div class="bg-white p-3 rounded-2xl inline-block shadow-xl border-4 border-emerald-200 dark:border-emerald-500/20 mx-auto">
+        <img id="pop-success-qr" src="" alt="V2RAY QR Code" class="w-48 h-48 object-contain mx-auto" />
+      </div>
+      <div class="p-3 bg-gray-50 dark:bg-dark-950/80 rounded-xl border border-gray-200 dark:border-gray-800 text-left space-y-1 text-xs">
+        <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-400">Account Name:</span><span id="pop-success-name" class="font-bold truncate max-w-[170px] text-gray-800 dark:text-gray-200">-</span></div>
+        <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-400">Data Quota:</span><span id="pop-success-gb" class="font-bold text-brand-600 dark:text-brand-300">300 GB</span></div>
+        <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-400">Expiration Date:</span><span id="pop-success-exp" class="font-bold text-gray-800 dark:text-gray-200">-</span></div>
+      </div>
+      <div class="space-y-2">
+        <div class="relative">
+          <input type="text" id="pop-success-link-input" readonly class="w-full p-2.5 pr-20 glass-input rounded-xl text-[11px] font-mono text-gray-700 dark:text-gray-300 select-all truncate" />
+          <button onclick="copyPopSuccessLink()" class="absolute right-1.5 top-1.5 px-3 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+        </div>
+      </div>
+      <button onclick="closeConfigSuccessModal()" class="w-full py-2.5 bg-gray-200 dark:bg-dark-800 hover:bg-gray-300 dark:hover:bg-dark-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-semibold">
+        Done (Go to My Accounts)
+      </button>
+    </div>
+  </div>
+
+  <!-- 1. AUTHENTICATION VIEW -->
+  <section id="auth-section" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass-card rounded-3xl p-6 sm:p-8 shadow-2xl relative border border-gray-200 dark:border-gray-800">
+      <div class="text-center mb-6">
+        <div class="inline-block p-1 bg-gray-100 dark:bg-dark-800/80 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg shadow-brand-500/10 mb-2">
+          <img src="https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png" alt="V2RAY Logo" class="w-14 h-14 object-contain rounded-xl mx-auto" />
+        </div>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">V2RAY PORTAL</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Login or Create Account</p>
+      </div>
+
+      <div class="flex border-b border-gray-200 dark:border-gray-800 mb-6">
+        <button id="tab-login-btn" type="button" onclick="switchAuthTab('login')" class="flex-1 pb-3 text-sm font-semibold border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 cursor-pointer">Login</button>
+        <button id="tab-register-btn" type="button" onclick="switchAuthTab('register')" class="flex-1 pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">Register</button>
+      </div>
+
+      <form id="form-login" onsubmit="handleEmailPasswordLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 text-xs"><i class="fa-regular fa-envelope"></i></span>
+            <input type="email" id="login-email" required class="w-full pl-9 pr-3.5 py-2.5 glass-input rounded-xl text-sm" placeholder="user@example.com" />
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Password</label>
+            <button type="button" onclick="switchAuthTab('forgot')" class="text-xs text-brand-600 dark:text-brand-400 hover:underline">Forgot Password?</button>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 text-xs"><i class="fa-solid fa-key"></i></span>
+            <input type="password" id="login-password" required class="w-full pl-9 pr-10 py-2.5 glass-input rounded-xl text-sm" placeholder="••••••••" />
+            <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-brand-500 text-xs cursor-pointer transition">
+              <i id="login-eye" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition shadow-lg shadow-brand-600/30 cursor-pointer">Login</button>
+      </form>
+
+      <form id="form-register" onsubmit="handleEmailPasswordRegister(event)" class="space-y-3.5" style="display: none;">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+          <div class="relative">
+             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 text-xs"><i class="fa-regular fa-user"></i></span>
+             <input type="text" id="register-name" required class="w-full pl-9 pr-3.5 py-2.5 glass-input rounded-xl text-sm" placeholder="John Doe" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+          <div class="relative">
+             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 text-xs"><i class="fa-regular fa-envelope"></i></span>
+             <input type="email" id="register-email" required class="w-full pl-9 pr-3.5 py-2.5 glass-input rounded-xl text-sm" placeholder="user@example.com" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password (Min 6 chars)</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 text-xs"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="register-password" minlength="6" required class="w-full pl-9 pr-10 py-2.5 glass-input rounded-xl text-sm" placeholder="••••••••" />
+            <button type="button" onclick="togglePasswordVisibility('register-password', 'reg-eye-1')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-brand-500 text-xs cursor-pointer transition">
+              <i id="reg-eye-1" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 text-xs"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="register-confirm-password" minlength="6" required class="w-full pl-9 pr-10 py-2.5 glass-input rounded-xl text-sm" placeholder="••••••••" />
+            <button type="button" onclick="togglePasswordVisibility('register-confirm-password', 'reg-eye-2')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-brand-500 text-xs cursor-pointer transition">
+              <i id="reg-eye-2" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition shadow-lg shadow-brand-600/30 cursor-pointer mt-2">Create Account</button>
+      </form>
+
+      <form id="form-forgot" onsubmit="handleForgotPassword(event)" class="space-y-4" style="display: none;">
+        <p class="text-xs text-gray-500 dark:text-gray-400">Enter your email to receive a password reset link.</p>
+        <div class="relative">
+           <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 text-xs"><i class="fa-regular fa-envelope"></i></span>
+           <input type="email" id="forgot-email" required class="w-full pl-9 pr-3.5 py-2.5 glass-input rounded-xl text-sm" placeholder="user@example.com" />
+        </div>
+        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition">Send Reset Link</button>
+        <button type="button" onclick="switchAuthTab('login')" class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white py-1 transition">Back to Login</button>
+      </form>
+
+      <div id="social-divider" class="my-5 flex items-center gap-3">
+        <div class="flex-1 border-t border-gray-200 dark:border-gray-800"></div>
+        <span class="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider">OR</span>
+        <div class="flex-1 border-t border-gray-200 dark:border-gray-800"></div>
+      </div>
+
+      <!-- Sign in with Google Button -->
+      <button id="btn-google-login" type="button" onclick="handleGoogleSignIn()" class="w-full py-2.5 bg-gray-50 dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm font-medium flex items-center justify-center gap-3 text-gray-800 dark:text-gray-200 transition shadow-sm cursor-pointer">
+        <i class="fa-brands fa-google text-red-500 text-base"></i>
+        <span>Continue with Google</span>
+      </button>
+
+      <!-- Theme Mode Toggle Button -->
+      <button type="button" onclick="toggleTheme()" class="w-full mt-2.5 py-2.5 bg-gray-50 dark:bg-dark-800/60 hover:bg-gray-100 dark:hover:bg-dark-800 border border-gray-200 dark:border-gray-700/80 rounded-xl text-xs sm:text-sm font-medium flex items-center justify-center gap-2 text-brand-600 dark:text-brand-400 transition cursor-pointer">
+        <i id="theme-icon" class="fa-solid fa-moon"></i>
+        <span id="theme-text">Toggle Theme</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 2. MAIN APP DASHBOARD VIEW -->
+  <div id="app-section" style="display: none;" class="min-h-screen flex flex-col">
+    
+    <!-- Top Navigation Bar -->
+    <header class="glass-card border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('dashboard')">
+          <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-dark-800/80 border border-gray-300 dark:border-gray-700/80 p-1 flex items-center justify-center shadow-md shadow-brand-500/10">
+            <img src="https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png" alt="V2RAY Logo" class="w-full h-full object-contain rounded-lg" />
+          </div>
+          <span class="font-bold text-base tracking-wide text-gray-900 dark:text-white">V2RAY <span class="text-brand-600 dark:text-brand-400">PORTAL</span></span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 bg-gray-100 dark:bg-dark-800/80 border border-gray-300 dark:border-gray-700/60 rounded-full py-1 pl-1.5 pr-3">
+            <div id="top-user-avatar" class="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-xs font-bold text-white">U</div>
+            <div class="text-left hidden sm:block">
+              <p id="top-user-name" class="text-xs font-semibold leading-tight text-gray-900 dark:text-white">User</p>
+              <div class="flex items-center gap-1.5">
+                <p id="top-user-balance" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold leading-tight">0.00 THB</p>
+                <button onclick="syncUserBalance(true)" class="text-[10px] text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400 transition" title="Sync Balance">
+                  <i id="hdr-sync-icon" class="fa-solid fa-rotate"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button onclick="handleLogout()" title="Logout" class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white flex items-center justify-center transition border border-rose-200 dark:border-rose-500/20 cursor-pointer">
+            <i class="fa-solid fa-right-from-bracket text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+      
+      <!-- SUB-VIEW 1: DASHBOARD OVERVIEW -->
+      <section id="view-dashboard" class="space-y-6">
+        
+        <!-- ADMIN PROMOTION & ANNOUNCEMENT BANNER -->
+        <div id="promo-banner-card" class="glass-card promo-banner rounded-3xl p-5 sm:p-6 border border-brand-300 dark:border-brand-500/30 bg-gradient-to-r from-brand-50/50 to-indigo-50/30 dark:from-[#0d1629] dark:to-[#111c38] shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all">
+          <div class="space-y-1.5 max-w-2xl">
+            <div class="flex items-center gap-2">
+              <span id="promo-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-brand-500/20 text-brand-600 dark:text-brand-300 border border-brand-500/30 flex items-center gap-1">
+                <i class="fa-solid fa-bullhorn text-[10px]"></i> <span id="promo-badge-text">PROMOTION</span>
+              </span>
+              <span id="promo-time-tag" class="text-[10px] text-gray-400 font-mono">Live Announcement</span>
+            </div>
+            <h2 id="promo-title" class="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white tracking-tight leading-snug">
+              Customize and buy as much GB as you need! 🚀
+            </h2>
+            <p id="promo-desc" class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+              Select your preferred node from the servers and customize the GB amount to buy.
+            </p>
+          </div>
+
+          <div class="flex gap-2 w-full sm:w-auto shrink-0">
+            <button onclick="switchView('topup')" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-brand-600/30 transition cursor-pointer">
+              <i class="fa-solid fa-plus-circle"></i> TopUp
+            </button>
+            <button onclick="switchView('my-accounts')" class="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
+              <i class="fa-solid fa-key"></i> My Accounts (<span id="btn-acc-count">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div onclick="navigateTo('topup')" title="Click to TopUp" class="glass-card rounded-2xl p-4 border border-gray-200 dark:border-gray-800 stat-card-clickable cursor-pointer group relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Balance</span>
+              <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs group-hover:bg-emerald-200 dark:group-hover:bg-emerald-500/25 transition">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <h3 id="stat-balance" class="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">0.00 THB</h3>
+              <button onclick="syncUserBalance(true); event.stopPropagation();" class="text-gray-400 hover:text-emerald-500 transition" title="Sync Balance">
+                <i id="card-sync-icon" class="fa-solid fa-rotate text-sm"></i>
+              </button>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+              <span>Available Credit</span>
+              <span class="text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">TopUp Now →</span>
+            </div>
+          </div>
+
+          <div onclick="navigateTo('topup-history')" title="View TopUp History" class="glass-card rounded-2xl p-4 border border-gray-200 dark:border-gray-800 stat-card-clickable cursor-pointer group relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Total TopUp</span>
+              <div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs group-hover:bg-blue-200 dark:group-hover:bg-blue-500/25 transition">
+                <i class="fa-solid fa-circle-arrow-up"></i>
+              </div>
+            </div>
+            <h3 id="stat-topup" class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">0.00 THB</h3>
+            <div class="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+              <span>Lifetime TopUp</span>
+              <span class="text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform">History →</span>
+            </div>
+          </div>
+
+          <div onclick="navigateTo('my-accounts')" title="View Active VPNs" class="glass-card rounded-2xl p-4 border border-gray-200 dark:border-gray-800 stat-card-clickable cursor-pointer group relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">Active VPN</span>
+              <div class="w-7 h-7 rounded-lg bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs group-hover:bg-brand-200 dark:group-hover:bg-brand-500/25 transition">
+                <i class="fa-solid fa-signal"></i>
+              </div>
+            </div>
+            <h3 id="stat-active-vpn" class="text-xl sm:text-2xl font-bold text-brand-600 dark:text-brand-400">0</h3>
+            <div class="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+              <span>Currently Using</span>
+              <span class="text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">Accounts →</span>
+            </div>
+          </div>
+
+          <div onclick="scrollToServers()" title="Go to Servers List" class="glass-card rounded-2xl p-4 border border-gray-200 dark:border-gray-800 stat-card-clickable cursor-pointer group relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Server Availability</span>
+              <div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs group-hover:bg-amber-200 dark:group-hover:bg-amber-500/25 transition">
+                <i class="fa-solid fa-server"></i>
+              </div>
+            </div>
+            <h3 id="stat-server-count" class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">0 Servers</h3>
+            <div class="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+              <span>High Speed Nodes</span>
+              <span class="text-amber-600 dark:text-amber-400 group-hover:translate-y-0.5 transition-transform">View Servers ↓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIM Network Category Filter Tabs Section -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-gray-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-sim-card text-brand-600 dark:text-brand-400 text-sm"></i>
+              <h3 class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">Select SIM Network</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="active-sim-rate-badge" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono">
+                Rate: 6 GB = 1฿
+              </span>
+              <span id="active-sim-badge" class="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/30 px-2.5 py-0.5 rounded-full uppercase">
+                All Networks
+              </span>
+            </div>
+          </div>
+
+          <!-- 5 SIM Tabs with Circular Logos -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2.5">
+            
+            <!-- All Servers Tab -->
+            <button type="button" onclick="setSimFilter('all')" id="sim-tab-all" class="sim-tab-btn active col-span-2 sm:col-span-1 p-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-dark-800/80 flex items-center gap-3 cursor-pointer shadow-sm">
+              <div class="sim-logo-ring w-11 h-11 rounded-full border-2 border-brand-500/40 bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 shadow-md transition-all">
+                <i class="fa-solid fa-globe text-lg"></i>
+              </div>
+              <div class="text-left overflow-hidden">
+                <p class="sim-tab-label text-xs font-bold text-gray-900 dark:text-white truncate">All Nodes</p>
+                <p id="tab-rate-all" class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">6 GB / 1฿</p>
+              </div>
+            </button>
+
+            <!-- 1. DTAC Tab -->
+            <button type="button" onclick="setSimFilter('dtac')" id="sim-tab-dtac" class="sim-tab-btn p-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-dark-800/80 flex items-center gap-3 cursor-pointer shadow-sm">
+              <div class="sim-logo-ring w-11 h-11 rounded-full border-2 border-blue-400/40 bg-white p-1 overflow-hidden shrink-0 shadow-md transition-all flex items-center justify-center">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXIB1stuxiDc1L4kBzwhYIMgrw-_uw78xbw0gX7ob0RA&s=10" alt="DTAC" class="w-full h-full object-contain rounded-full" />
+              </div>
+              <div class="text-left overflow-hidden">
+                <p class="sim-tab-label text-xs font-bold text-gray-900 dark:text-white truncate">DTAC</p>
+                <p id="tab-rate-dtac" class="text-[10px] text-blue-500 font-mono font-semibold">6 GB / 1฿</p>
+              </div>
+            </button>
+
+            <!-- 2. TRUE H Tab -->
+            <button type="button" onclick="setSimFilter('true')" id="sim-tab-true" class="sim-tab-btn p-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-dark-800/80 flex items-center gap-3 cursor-pointer shadow-sm">
+              <div class="sim-logo-ring w-11 h-11 rounded-full border-2 border-red-400/40 bg-white p-1 overflow-hidden shrink-0 shadow-md transition-all flex items-center justify-center">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmwX8pfzoxcMnEJBBQXx15N6Wv6e5ZWsVbhVHeoMEA0Q&s=10" alt="TRUE H" class="w-full h-full object-contain rounded-full" />
+              </div>
+              <div class="text-left overflow-hidden">
+                <p class="sim-tab-label text-xs font-bold text-gray-900 dark:text-white truncate">TRUE H</p>
+                <p id="tab-rate-true" class="text-[10px] text-red-500 font-mono font-semibold">6 GB / 1฿</p>
+              </div>
+            </button>
+
+            <!-- 3. AIS Tab -->
+            <button type="button" onclick="setSimFilter('ais')" id="sim-tab-ais" class="sim-tab-btn p-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-dark-800/80 flex items-center gap-3 cursor-pointer shadow-sm">
+              <div class="sim-logo-ring w-11 h-11 rounded-full border-2 border-emerald-400/40 bg-white p-1 overflow-hidden shrink-0 shadow-md transition-all flex items-center justify-center">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHUEr7TzZLCDSayxzU-7K8odP5ZohzIdo66-F6AH5TM2N28E98di2RnJo&s=10" alt="AIS" class="w-full h-full object-contain rounded-full" />
+              </div>
+              <div class="text-left overflow-hidden">
+                <p class="sim-tab-label text-xs font-bold text-gray-900 dark:text-white truncate">AIS</p>
+                <p id="tab-rate-ais" class="text-[10px] text-emerald-500 font-mono font-semibold">6 GB / 1฿</p>
+              </div>
+            </button>
+
+            <!-- 4. Myanmar All Sim Tab -->
+            <button type="button" onclick="setSimFilter('myanmar')" id="sim-tab-myanmar" class="sim-tab-btn p-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-dark-800/80 flex items-center gap-3 cursor-pointer shadow-sm">
+              <div class="sim-logo-ring w-11 h-11 rounded-full border-2 border-amber-400/40 bg-white p-1 overflow-hidden shrink-0 shadow-md transition-all flex items-center justify-center">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVTZ7g-naT0eH4mxeNtVnFU4MtbvyR-LaBDZbnacuN8g&s=10" alt="Myanmar All Sim" class="w-full h-full object-contain rounded-full" />
+              </div>
+              <div class="text-left overflow-hidden">
+                <p class="sim-tab-label text-xs font-bold text-gray-900 dark:text-white truncate">Myanmar</p>
+                <p id="tab-rate-myanmar" class="text-[10px] text-amber-500 font-mono font-semibold">6 GB / 1฿</p>
+              </div>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Available Servers List -->
+        <div id="dashboard-servers-section" class="glass-card rounded-2xl p-5 border border-gray-200 dark:border-gray-800 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-server text-brand-600 dark:text-brand-400 mr-2"></i>Available V2RAY Servers</h3>
+              <p id="servers-filter-subtext" class="text-xs text-gray-500 dark:text-gray-400">Showing all servers</p>
+            </div>
+            <span class="text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span> Realtime Connected
+            </span>
+          </div>
+          
+          <div id="dashboard-servers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="col-span-full py-8 text-center text-xs text-gray-500 dark:text-gray-400">Fetching servers...</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- SUB-VIEW 2: TOPUP SECTION -->
+      <section id="view-topup" style="display: none;" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-6 space-y-6">
+            <div id="topup-step-1" class="glass-card rounded-2xl p-5 sm:p-6 border border-gray-200 dark:border-gray-800 relative">
+              
+              <!-- Back Button -->
+              <div class="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-3">
+                <div class="flex items-center gap-3">
+                  <button onclick="switchView('dashboard')" class="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center transition border border-gray-300 dark:border-gray-700 text-xs font-semibold gap-1.5">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                  </button>
+                  <div>
+                    <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-wallet text-brand-600 dark:text-brand-400 mr-2"></i>Account TopUp</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Select the amount you want to top up</p>
+                  </div>
+                </div>
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-2.5 py-1 rounded-lg">THB (Baht)</span>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">TopUp Amount</label>
+                  <div class="grid grid-cols-4 gap-2 mb-2.5">
+                    <button type="button" onclick="setTopUpAmount(50)" class="py-2.5 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-semibold transition text-gray-800 dark:text-gray-300">50 ฿</button>
+                    <button type="button" onclick="setTopUpAmount(90)" class="py-2.5 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-semibold transition text-gray-800 dark:text-gray-300">90 ฿</button>
+                    <button type="button" onclick="setTopUpAmount(180)" class="py-2.5 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-semibold transition text-gray-800 dark:text-gray-300">180 ฿</button>
+                    <button type="button" onclick="setTopUpAmount(500)" class="py-2.5 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-semibold transition text-gray-800 dark:text-gray-300">500 ฿</button>
+                  </div>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400 text-xs font-bold">฿</span>
+                    <input type="number" id="topup-amount-input" value="90" min="20" class="w-full pl-8 pr-3.5 py-2.5 glass-input rounded-xl text-sm font-semibold" />
+                  </div>
+                </div>
+
+                <button type="button" onclick="generatePaymentRequest()" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-lg shadow-brand-600/30 transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-arrow-right"></i> Proceed to Payment Request
+                </button>
+              </div>
+            </div>
+
+            <div id="topup-step-2" style="display: none;" class="glass-card rounded-2xl p-5 sm:p-6 border border-brand-300 dark:border-brand-500/30 shadow-xl space-y-4">
+              <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
+                <div>
+                  <span class="text-[10px] bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 font-bold px-2 py-0.5 rounded uppercase">Step 2: Upload Payment Slip</span>
+                  <h4 class="text-sm font-bold mt-1 text-gray-900 dark:text-white">Payment ID: <span id="current-payment-id" class="text-brand-600 dark:text-brand-400 font-mono">TXN-000000</span></h4>
+                </div>
+                <button onclick="cancelTopUpStep2()" class="text-xs text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-400"><i class="fa-solid fa-xmark"></i> Cancel</button>
+              </div>
+
+              <div class="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl border border-brand-200 dark:border-brand-500/30 flex items-center justify-between">
+                <span class="text-xs text-gray-700 dark:text-gray-300">Exact amount to transfer:</span>
+                <span id="display-transfer-amount" class="text-base font-bold text-emerald-600 dark:text-emerald-400">90.00 THB</span>
+              </div>
+
+              <div class="space-y-2">
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Receiver Bank Accounts & QR Code:</p>
+                <div id="dynamic-banks-container" class="space-y-2"></div>
+              </div>
+
+              <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Upload Payment Slip (Photo)</label>
+                <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-brand-500 rounded-xl p-4 text-center cursor-pointer transition bg-gray-50 dark:bg-dark-800/50" onclick="document.getElementById('slip-file-input').click()">
+                  <input type="file" id="slip-file-input" accept="image/*" class="hidden" onchange="handleSlipFileSelect(event)" />
+                  <div id="slip-upload-placeholder" class="space-y-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-brand-600 dark:text-brand-400"></i>
+                    <p class="text-xs text-gray-700 dark:text-gray-300 font-medium">Click to select slip photo</p>
+                    <p class="text-[10px] text-gray-500">JPG, PNG, WebP (Max 5MB)</p>
+                  </div>
+                  <div id="slip-preview-container" style="display: none;" class="relative">
+                    <img id="slip-preview-img" src="" alt="Slip Preview" class="max-h-48 mx-auto rounded-lg object-contain shadow-md border border-gray-300 dark:border-gray-700" />
+                    <button type="button" onclick="event.stopPropagation(); removeSlipPreview();" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs shadow-md"><i class="fa-solid fa-xmark"></i></button>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" id="btn-submit-slip" onclick="submitPaymentSlip()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> Submit Slip
+              </button>
+            </div>
+          </div>
+
+          <!-- Payment History with Delete All Feature -->
+          <div id="topup-history-anchor" class="lg:col-span-6 space-y-4">
+            <div class="glass-card rounded-2xl p-5 sm:p-6 border border-gray-200 dark:border-gray-800">
+              <div class="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-3">
+                <div class="flex items-center gap-2">
+                  <h4 class="text-sm font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-clock-rotate-left text-brand-600 dark:text-brand-400 mr-2"></i>TopUp History</h4>
+                  <span id="history-count" class="text-[11px] text-gray-500 dark:text-gray-400">0 Items</span>
+                </div>
+                <!-- Delete All Button -->
+                <button onclick="confirmDeleteAllHistory()" class="px-2.5 py-1 bg-rose-100 dark:bg-rose-500/10 hover:bg-rose-200 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                  <i class="fa-solid fa-trash-can"></i> Delete All
+                </button>
+              </div>
+              <div id="topup-history-list" class="space-y-3 max-h-[550px] overflow-y-auto pr-1 no-scrollbar"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUB-VIEW 3: MY ACCOUNTS -->
+      <section id="view-my-accounts" style="display: none;" class="space-y-4">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="text-base font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-key text-brand-600 dark:text-brand-400 mr-2"></i>My V2RAY Accounts</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Live Traffic (Byte In / Byte Out) and Online/Offline Status</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-lg flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span> Auto Sync (3s)
+            </span>
+            <button onclick="refreshAllClientStatus(false)" class="px-3 py-1.5 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium flex items-center gap-1.5 transition">
+              <i id="btn-refresh-icon" class="fa-solid fa-rotate text-xs"></i> <span>Sync Now</span>
+            </button>
+            <button onclick="switchView('dashboard')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition">
+              + Buy New
+            </button>
+          </div>
+        </div>
+
+        <div id="my-accounts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- SUB-VIEW 4: PROFILE -->
+      <section id="view-profile" style="display: none;" class="space-y-6">
+        <div class="glass-card rounded-2xl p-5 sm:p-6 border border-gray-200 dark:border-gray-800 max-w-lg mx-auto space-y-4">
+          <h3 class="text-base font-bold border-b border-gray-200 dark:border-gray-800 pb-3 text-gray-900 dark:text-white"><i class="fa-solid fa-user-gear text-brand-600 dark:text-brand-400 mr-2"></i>Profile Information</h3>
+          <div class="flex items-center gap-4">
+            <div id="profile-avatar-large" class="w-16 h-16 rounded-2xl bg-brand-600 text-white font-bold text-2xl flex items-center justify-center shadow-lg shadow-brand-500/20">U</div>
+            <div>
+              <h4 id="profile-name-display" class="text-sm font-bold text-gray-900 dark:text-white">User Name</h4>
+              <p id="profile-email-display" class="text-xs text-gray-500 dark:text-gray-400">user@example.com</p>
+            </div>
+          </div>
+          <div class="pt-2">
+            <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-100 dark:bg-rose-600/20 hover:bg-rose-200 dark:hover:bg-rose-600 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-white border border-rose-300 dark:border-rose-500/30 rounded-xl text-xs font-semibold transition">
+              <i class="fa-solid fa-right-from-bracket mr-1.5"></i> Logout
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-200 dark:border-gray-800/80 py-6 px-4 mb-16 sm:mb-0 mt-auto">
+      <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div class="flex items-center gap-2.5">
+          <img src="https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png" alt="V2RAY Logo" class="w-6 h-6 object-contain rounded-md" />
+          <p class="text-xs text-gray-500 dark:text-gray-400 font-medium tracking-wide">
+            © 2026 <span class="text-brand-600 dark:text-brand-400 font-semibold">V2RAY PORTAL</span>. All rights reserved.
+          </p>
+        </div>
+
+        <a href="https://t.me/Pussy1990" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#229ED9]/15 hover:bg-[#229ED9]/25 text-[#229ED9] border border-[#229ED9]/30 transition-all text-xs font-semibold hover:scale-105 active:scale-95 shadow-sm">
+          <i class="fa-brands fa-telegram text-base"></i>
+          <span>Contact Admin</span>
+        </a>
+      </div>
+    </footer>
+
+    <!-- Bottom Mobile Nav -->
+    <nav class="sm:hidden fixed bottom-0 inset-x-0 glass-card border-t border-gray-200 dark:border-gray-800 py-2 px-6 flex justify-between items-center z-40">
+      <button onclick="switchView('dashboard')" class="flex flex-col items-center text-brand-600 dark:text-brand-400"><i class="fa-solid fa-house text-base"></i><span class="text-[10px] mt-1">Home</span></button>
+      <button onclick="switchView('topup')" class="flex flex-col items-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><i class="fa-solid fa-wallet text-base"></i><span class="text-[10px] mt-1">TopUp</span></button>
+      <button onclick="switchView('my-accounts')" class="flex flex-col items-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><i class="fa-solid fa-key text-base"></i><span class="text-[10px] mt-1">Accounts</span></button>
+      <button onclick="switchView('profile')" class="flex flex-col items-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><i class="fa-solid fa-user text-base"></i><span class="text-[10px] mt-1">Profile</span></button>
+    </nav>
+
+  </div>
+
+  <script>
+    const WORKER_API_BASE = "https://v2ray-topup.activevpn2026.workers.dev";
+    
+    // SIM Category Logos Mapping
+    const SIM_LOGOS = {
+      'dtac': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXIB1stuxiDc1L4kBzwhYIMgrw-_uw78xbw0gX7ob0RA&s=10',
+      'true': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmwX8pfzoxcMnEJBBQXx15N6Wv6e5ZWsVbhVHeoMEA0Q&s=10',
+      'ais': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHUEr7TzZLCDSayxzU-7K8odP5ZohzIdo66-F6AH5TM2N28E98di2RnJo&s=10',
+      'myanmar': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVTZ7g-naT0eH4mxeNtVnFU4MtbvyR-LaBDZbnacuN8g&s=10'
+    };
+
+    // SIM Rates config (GB per 1 THB) - dynamically updated from Firestore
+    let simRates = {
+      'all': 6,
+      'dtac': 6,
+      'true': 6,
+      'ais': 6,
+      'myanmar': 6
+    };
+
+    let activeServerRate = 6; // current active rate for modal buying
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAXr3AJTOoaYTY0e9pMwcASxDkJGidZfvU",
+      authDomain: "v2ray-system.firebaseapp.com",
+      projectId: "v2ray-system",
+      storageBucket: "v2ray-system.firebasestorage.app",
+      messagingSenderId: "836195472727",
+      appId: "1:836195472727:web:6956e52dcd7434a2321a12",
+      measurementId: "G-DJMQJKVMM3"
+    };
+
+    function toggleTheme() {
+      const htmlEl = document.documentElement;
+      const iconEl = document.getElementById('theme-icon');
+      const textEl = document.getElementById('theme-text');
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('v2ray_theme', 'light');
+        if (iconEl) iconEl.className = "fa-solid fa-sun";
+        if (textEl) textEl.innerText = "Toggle Theme (Dark/Light)";
+      } else {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('v2ray_theme', 'dark');
+        if (iconEl) iconEl.className = "fa-solid fa-moon";
+        if (textEl) textEl.innerText = "Toggle Theme (Dark/Light)";
+      }
+    }
+
+    (function() {
+      const saved = localStorage.getItem('v2ray_theme');
+      const iconEl = document.getElementById('theme-icon');
+      if (saved === 'light') {
+        document.documentElement.classList.remove('dark');
+        if (iconEl) iconEl.className = "fa-solid fa-sun";
+      } else {
+        document.documentElement.classList.add('dark');
+        if (iconEl) iconEl.className = "fa-solid fa-moon";
+      }
+    })();
+
+    window.togglePasswordVisibility = function(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    };
+
+    window.showUniversalAlert = function(title, desc, iconClass, btnText, isConfirm, onConfirm) {
+      document.getElementById('modal-alert-title').innerText = title;
+      document.getElementById('modal-alert-desc').innerText = desc;
+      const iconBox = document.getElementById('modal-alert-icon');
+      iconBox.className = iconClass || "fa-solid fa-circle-exclamation";
+      
+      const btnConfirm = document.getElementById('modal-alert-btn-confirm');
+      const btnCancel = document.getElementById('modal-alert-btn-cancel');
+      btnConfirm.innerText = btnText || "Confirm";
+      
+      const newBtnConfirm = btnConfirm.cloneNode(true);
+      btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+
+      if (isConfirm) {
+        btnCancel.style.display = 'block';
+        newBtnConfirm.onclick = function() {
+          closeUniversalAlert();
+          if (typeof onConfirm === 'function') onConfirm();
+        };
+      } else {
+        btnCancel.style.display = 'none';
+        newBtnConfirm.onclick = closeUniversalAlert;
+      }
+      document.getElementById('modal-universal-alert').style.display = 'flex';
+    };
+
+    window.closeUniversalAlert = function() {
+      document.getElementById('modal-universal-alert').style.display = 'none';
+    };
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes <= 0) return '0.00 KB';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      if (i === 0) return bytes + ' ' + sizes[i];
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function playCelebrationSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.8);
+      } catch (_) {}
+    }
+
+    window.showToast = function(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `p-3 rounded-xl border text-xs text-gray-900 dark:text-white shadow-xl transition-all duration-300 flex items-center gap-2 ${
+        type === 'error' ? 'bg-rose-100 dark:bg-rose-900/90 border-rose-300 dark:border-rose-600' : 
+        type === 'success' ? 'bg-emerald-100 dark:bg-emerald-900/90 border-emerald-300 dark:border-emerald-600' : 'bg-gray-100 dark:bg-gray-800/90 border-gray-300 dark:border-gray-700'
+      }`;
+      const icon = type === 'error' ? '<i class="fa-solid fa-circle-exclamation text-rose-500 dark:text-rose-400"></i>' :
+                   type === 'success' ? '<i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400"></i>' :
+                   '<i class="fa-solid fa-circle-info text-blue-600 dark:text-blue-400"></i>';
+      toast.innerHTML = `${icon}<span class="font-medium">${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+    };
+
+    window.copyText = function(text, successMsg) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => showToast(successMsg, 'success'));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(successMsg, 'success');
+      }
+    };
+
+    window.switchAuthTab = function(t) {
+      document.getElementById('form-login').style.display = t === 'login' ? 'block' : 'none';
+      document.getElementById('form-register').style.display = t === 'register' ? 'block' : 'none';
+      document.getElementById('form-forgot').style.display = t === 'forgot' ? 'block' : 'none';
+      document.getElementById('social-divider').style.display = t === 'forgot' ? 'none' : 'flex';
+      document.getElementById('btn-google-login').style.display = t === 'forgot' ? 'none' : 'flex';
+      document.getElementById('tab-login-btn').className = t === 'login' ? "flex-1 pb-3 text-sm font-semibold border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 cursor-pointer" : "flex-1 pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300";
+      document.getElementById('tab-register-btn').className = t === 'register' ? "flex-1 pb-3 text-sm font-semibold border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 cursor-pointer" : "flex-1 pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300";
+    };
+
+    window.switchView = function(viewName) {
+      ['dashboard', 'topup', 'my-accounts', 'profile'].forEach(v => {
+        document.getElementById(`view-${v}`).style.display = (v === viewName) ? 'block' : 'none';
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (viewName === 'my-accounts') {
+        refreshAllClientStatus(true);
+      }
+    };
+
+    window.navigateTo = function(target) {
+      if (target === 'topup') {
+        switchView('topup');
+      } else if (target === 'topup-history') {
+        switchView('topup');
+        setTimeout(() => {
+          const el = document.getElementById('topup-history-anchor');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else if (target === 'my-accounts') {
+        switchView('my-accounts');
+      }
+    };
+
+    window.scrollToServers = function() {
+      const el = document.getElementById('dashboard-servers-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.setTopUpAmount = function(val) {
+      document.getElementById('topup-amount-input').value = val;
+    };
+
+    let auth = null;
+    let db = null;
+    let currentUser = null;
+    let currentPendingRequestId = null;
+    let selectedSlipBase64 = null;
+    let userBalance = 0;
+    let activeBanksList = [];
+    let activeServersList = [];
+    let selectedServerToBuy = null;
+    let currentSelectedGb = 60;
+    let clientStatusCache = {};
+    let statusPollingTimer = null;
+    let isInitialTopUpLoad = true;
+    let processedApprovedTxIds = new Set();
+    let currentVpnAccountsDocs = [];
+
+    // Active SIM Network Filter State: 'all' | 'dtac' | 'true' | 'ais' | 'myanmar'
+    let currentSimFilter = 'all';
+
+    window.setSimFilter = function(filter) {
+      currentSimFilter = filter;
+      const allTabs = ['all', 'dtac', 'true', 'ais', 'myanmar'];
+      allTabs.forEach(t => {
+        const btn = document.getElementById(`sim-tab-${t}`);
+        if (btn) {
+          if (t === filter) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      });
+
+      const badge = document.getElementById('active-sim-badge');
+      const rateBadge = document.getElementById('active-sim-rate-badge');
+      const sub = document.getElementById('servers-filter-subtext');
+      const labelMap = {
+        'all': 'All Networks',
+        'dtac': 'DTAC (Thailand)',
+        'true': 'TRUE H (Thailand)',
+        'ais': 'AIS (Thailand)',
+        'myanmar': 'Myanmar All SIMs'
+      };
+
+      if (badge) badge.innerText = labelMap[filter] || 'Filtered';
+      if (rateBadge) {
+        const currentRate = simRates[filter] || simRates['all'] || 6;
+        rateBadge.innerText = `Rate: ${currentRate} GB = 1฿`;
+      }
+      if (sub) {
+        sub.innerText = filter === 'all' 
+          ? 'Showing all servers' 
+          : `Showing servers compatible with ${labelMap[filter]}`;
+      }
+
+      renderDashboardServers();
+    };
+
+    function getRateForServer(s) {
+      const cat = (s.simCategory || s.category || 'all').toLowerCase().trim();
+      if (cat.includes('dtac')) return simRates['dtac'] || 6;
+      if (cat.includes('true')) return simRates['true'] || 6;
+      if (cat.includes('ais')) return simRates['ais'] || 6;
+      if (cat.includes('myanmar') || cat.includes('mm')) return simRates['myanmar'] || 6;
+      return simRates['all'] || 6;
+    }
+
+    function doesServerMatchSim(s, filter) {
+      if (filter === 'all') return true;
+
+      const category = (s.simCategory || s.category || '').toLowerCase().trim();
+      const name = (s.name || '').toLowerCase();
+      const note = (s.note || '').toLowerCase();
+
+      if (filter === 'dtac') {
+        return category === 'dtac' || category.includes('dtac') || name.includes('dtac') || note.includes('dtac');
+      }
+      if (filter === 'true') {
+        return category === 'true' || category.includes('true') || name.includes('true') || note.includes('true');
+      }
+      if (filter === 'ais') {
+        return category === 'ais' || category.includes('ais') || name.includes('ais') || note.includes('ais');
+      }
+      if (filter === 'myanmar') {
+        return category === 'myanmar' || category.includes('myanmar') || category.includes('mm') || 
+               category.includes('mpt') || category.includes('atom') || category.includes('mytel') || category.includes('ooredoo') ||
+               name.includes('myanmar') || name.includes('mm') || name.includes('mpt') || name.includes('atom') || name.includes('mytel') || name.includes('ooredoo') ||
+               note.includes('myanmar') || note.includes('mm') || note.includes('mpt');
+      }
+      return true;
+    }
+
+    try {
+      if (window.firebase) {
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+
+        listenToGeneralSettings();
+        listenToActiveBanks();
+        listenToActiveServers();
+
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            currentUser = user;
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'flex';
+            await loadUserData(user);
+            listenToTopUpHistory(user.uid);
+            listenToMyVpnAccounts(user.uid);
+            startAutoStatusPolling();
+          } else {
+            currentUser = null;
+            if (statusPollingTimer) clearInterval(statusPollingTimer);
+            document.getElementById('app-section').style.display = 'none';
+            document.getElementById('auth-section').style.display = 'flex';
+          }
+        });
+      }
+    } catch(err) { console.warn(err); }
+
+    function listenToGeneralSettings() {
+      db.collection('settings').doc('general').onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+
+          // Promotion / Notification Banner Update
+          if (data.promoTitle) {
+            document.getElementById('promo-title').innerText = data.promoTitle;
+          }
+          if (data.promoDesc) {
+            document.getElementById('promo-desc').innerText = data.promoDesc;
+          }
+          if (data.promoBadge) {
+            document.getElementById('promo-badge-text').innerText = data.promoBadge;
+          }
+          if (data.promoTime) {
+            document.getElementById('promo-time-tag').innerText = data.promoTime;
+          }
+
+          // Dynamic SIM Rates Update
+          if (data.simRates) {
+            simRates['all'] = parseFloat(data.simRates.all) || parseFloat(data.dataPerThb) || 6;
+            simRates['dtac'] = parseFloat(data.simRates.dtac) || 6;
+            simRates['true'] = parseFloat(data.simRates.true) || 6;
+            simRates['ais'] = parseFloat(data.simRates.ais) || 6;
+            simRates['myanmar'] = parseFloat(data.simRates.myanmar) || 6;
+          } else if (data.dataPerThb) {
+            const def = parseFloat(data.dataPerThb);
+            simRates = { all: def, dtac: def, true: def, ais: def, myanmar: def };
+          }
+          updateDynamicRatesUI();
+        }
+      });
+    }
+
+    function updateDynamicRatesUI() {
+      const tabAll = document.getElementById('tab-rate-all');
+      const tabDtac = document.getElementById('tab-rate-dtac');
+      const tabTrue = document.getElementById('tab-rate-true');
+      const tabAis = document.getElementById('tab-rate-ais');
+      const tabMm = document.getElementById('tab-rate-myanmar');
+
+      if (tabAll) tabAll.innerText = `${simRates.all} GB / 1฿`;
+      if (tabDtac) tabDtac.innerText = `${simRates.dtac} GB / 1฿`;
+      if (tabTrue) tabTrue.innerText = `${simRates.true} GB / 1฿`;
+      if (tabAis) tabAis.innerText = `${simRates.ais} GB / 1฿`;
+      if (tabMm) tabMm.innerText = `${simRates.myanmar} GB / 1฿`;
+
+      const rateBadge = document.getElementById('active-sim-rate-badge');
+      if (rateBadge) {
+        const cur = simRates[currentSimFilter] || simRates['all'] || 6;
+        rateBadge.innerText = `Rate: ${cur} GB = 1฿`;
+      }
+
+      renderDashboardServers();
+    }
+
+    async function loadUserData(user) {
+      const name = user.displayName || user.email.split('@')[0];
+      document.getElementById('top-user-name').innerText = name;
+      document.getElementById('profile-name-display').innerText = name;
+      document.getElementById('profile-email-display').innerText = user.email;
+
+      const initialLetter = name.charAt(0).toUpperCase();
+      document.getElementById('top-user-avatar').innerText = initialLetter;
+      document.getElementById('profile-avatar-large').innerText = initialLetter;
+
+      const userDocRef = db.collection('users').doc(user.uid);
+      const snap = await userDocRef.get();
+      if (!snap.exists) {
+        await userDocRef.set({
+          uid: user.uid,
+          displayName: name,
+          email: user.email,
+          balance: 0,
+          totalTopUp: 0,
+          role: 'user',
+          status: 'active',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      userDocRef.onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          userBalance = data.balance || 0;
+          const balText = userBalance.toFixed(2) + ' THB';
+          
+          document.getElementById('top-user-balance').innerText = balText;
+          const statBalanceEl = document.getElementById('stat-balance');
+          if (statBalanceEl) statBalanceEl.innerText = balText;
+          
+          const buyMyBalanceEl = document.getElementById('buy-my-balance');
+          if (buyMyBalanceEl) buyMyBalanceEl.innerText = balText;
+          
+          const statTopUpEl = document.getElementById('stat-topup');
+          if (statTopUpEl) statTopUpEl.innerText = (data.totalTopUp || 0).toFixed(2) + ' THB';
+        }
+      });
+    }
+
+    window.syncUserBalance = async function(isManual = false) {
+      if (!currentUser) return;
+      if (isManual) {
+        const hIcon = document.getElementById('hdr-sync-icon');
+        const cIcon = document.getElementById('card-sync-icon');
+        if (hIcon) hIcon.classList.add('animate-spin');
+        if (cIcon) cIcon.classList.add('animate-spin');
+      }
+      try {
+        const snap = await db.collection('users').doc(currentUser.uid).get();
+        if (snap.exists) {
+          const data = snap.data();
+          userBalance = data.balance || 0;
+          const balText = userBalance.toFixed(2) + ' THB';
+          document.getElementById('top-user-balance').innerText = balText;
+          const statBalanceEl = document.getElementById('stat-balance');
+          if (statBalanceEl) statBalanceEl.innerText = balText;
+        }
+      } catch(e) {}
+      finally {
+        if (isManual) {
+          setTimeout(() => {
+            const hIcon = document.getElementById('hdr-sync-icon');
+            const cIcon = document.getElementById('card-sync-icon');
+            if (hIcon) hIcon.classList.remove('animate-spin');
+            if (cIcon) cIcon.classList.remove('animate-spin');
+          }, 500);
+        }
+      }
+    };
+
+    function triggerTopUpCelebration(amount, txId) {
+      document.getElementById('topup-celebrate-amount').innerText = `+${Number(amount).toFixed(2)} THB`;
+      document.getElementById('topup-celebrate-tx').innerText = `Payment ID: ${txId}`;
+      document.getElementById('topup-celebrate-newbal').innerText = `${userBalance.toFixed(2)} THB`;
+      document.getElementById('modal-topup-celebration').style.display = 'flex';
+      playCelebrationSound();
+    }
+
+    window.closeTopUpCelebrationModal = function() {
+      document.getElementById('modal-topup-celebration').style.display = 'none';
+    };
+
+    function listenToActiveBanks() {
+      db.collection('banks').onSnapshot((snap) => {
+        activeBanksList = [];
+        snap.forEach(doc => {
+          const b = doc.data();
+          if (b.status !== 'inactive') {
+            b.id = doc.id;
+            activeBanksList.push(b);
+          }
+        });
+        renderUserBanks();
+      });
+    }
+
+    function renderUserBanks() {
+      const container = document.getElementById('dynamic-banks-container');
+      if (!container) return;
+
+      if (!activeBanksList.length) {
+        container.innerHTML = `<div class="p-3 bg-gray-100 dark:bg-dark-800 rounded-xl text-amber-600 dark:text-amber-300 text-xs">No bank accounts available. Please contact admin.</div>`;
+        return;
+      }
+
+      let html = '';
+      activeBanksList.forEach(b => {
+        const logoImg = b.logoUrl ? `<img src="${b.logoUrl}" alt="logo" class="w-7 h-7 rounded-md object-contain bg-white dark:bg-white/10 p-0.5 border border-gray-200 dark:border-transparent" />` : `<div class="w-7 h-7 rounded-md bg-brand-600 flex items-center justify-center text-white text-xs"><i class="fa-solid fa-building-columns"></i></div>`;
+        const qrButton = b.qrCodeUrl ? `
+          <button type="button" onclick="openQrModal('${b.qrCodeUrl}', '${b.bankName} PromptPay QR Code')" class="px-2 py-1 bg-brand-100 dark:bg-brand-600/20 hover:bg-brand-200 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-500 hover:text-brand-900 dark:hover:text-white rounded-lg border border-brand-200 dark:border-brand-500/30 text-[10px] font-bold flex items-center gap-1 transition">
+            <i class="fa-solid fa-qrcode"></i> View QR
+          </button>
+        ` : '';
+
+        html += `
+          <div class="p-3.5 bg-gray-50 dark:bg-dark-800/90 rounded-xl border border-gray-200 dark:border-gray-700/80 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                ${logoImg}
+                <span class="text-xs font-bold text-gray-900 dark:text-gray-200">${b.bankName}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                ${qrButton}
+                <button type="button" onclick="copyText('${b.accountNumber}', '${b.bankName} Account number copied!')" class="text-[11px] text-brand-600 dark:text-brand-500 hover:underline font-bold">
+                  <i class="fa-regular fa-copy"></i> Copy
+                </button>
+              </div>
+            </div>
+            <div class="text-[11px] text-gray-600 dark:text-gray-400 grid grid-cols-2 gap-1 pt-1">
+              <p>Name: <strong class="text-gray-900 dark:text-gray-200">${b.accountName}</strong></p>
+              <p>Account: <strong class="text-brand-600 dark:text-brand-400 font-mono">${b.accountNumber}</strong></p>
+            </div>
+            ${b.note ? `<p class="text-[10px] text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">${b.note}</p>` : ''}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function listenToActiveServers() {
+      db.collection('servers').onSnapshot((snap) => {
+        activeServersList = [];
+        snap.forEach(doc => {
+          const s = doc.data();
+          if (s.status !== 'inactive') {
+            s.id = doc.id;
+            activeServersList.push(s);
+          }
+        });
+        document.getElementById('stat-server-count').innerText = `${activeServersList.length} Servers`;
+        renderDashboardServers();
+      });
+    }
+
+    function renderDashboardServers() {
+      const container = document.getElementById('dashboard-servers-grid');
+      if (!container) return;
+
+      const filteredServers = activeServersList.filter(s => doesServerMatchSim(s, currentSimFilter));
+
+      if (!filteredServers.length) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-xs text-gray-500 dark:text-gray-400 space-y-2">
+            <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-dark-800 text-gray-400 flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-server"></i></div>
+            <p class="font-semibold">No servers found for the selected SIM Network.</p>
+            <p class="text-[11px]">Please switch to "All Nodes" or another network.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      filteredServers.forEach(s => {
+        let flagElem = '';
+        if (s.flagUrl && (s.flagUrl.startsWith('http') || s.flagUrl.startsWith('https'))) {
+          flagElem = `
+            <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-brand-300 dark:border-brand-500/40 shadow-md shrink-0 flex items-center justify-center bg-gray-100 dark:bg-dark-900 p-0.5">
+              <img src="${s.flagUrl}" alt="flag" class="w-full h-full object-cover rounded-full" />
+            </div>
+          `;
+        } else {
+          flagElem = `
+            <div class="w-10 h-10 rounded-full border-2 border-brand-300 dark:border-brand-500/40 shadow-md shrink-0 flex items-center justify-center bg-gray-100 dark:bg-dark-900 text-xl">
+              ${s.flag || '🌐'}
+            </div>
+          `;
+        }
+
+        let simBadge = '';
+        const simKey = (s.simCategory || s.category || '').toLowerCase();
+        if (simKey.includes('dtac')) {
+          simBadge = `
+            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-500/30">
+              <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+                <img src="${SIM_LOGOS.dtac}" alt="dtac" class="w-full h-full object-contain rounded-full" />
+              </span>
+              DTAC
+            </span>
+          `;
+        } else if (simKey.includes('true')) {
+          simBadge = `
+            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-500/30">
+              <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+                <img src="${SIM_LOGOS.true}" alt="true" class="w-full h-full object-contain rounded-full" />
+              </span>
+              TRUE H
+            </span>
+          `;
+        } else if (simKey.includes('ais')) {
+          simBadge = `
+            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/30">
+              <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+                <img src="${SIM_LOGOS.ais}" alt="ais" class="w-full h-full object-contain rounded-full" />
+              </span>
+              AIS
+            </span>
+          `;
+        } else if (simKey.includes('myanmar') || simKey.includes('mm')) {
+          simBadge = `
+            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/30">
+              <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+                <img src="${SIM_LOGOS.myanmar}" alt="mm" class="w-full h-full object-contain rounded-full" />
+              </span>
+              Myanmar All
+            </span>
+          `;
+        } else {
+          simBadge = `
+            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-900 px-2 py-0.5 rounded-full border border-gray-300 dark:border-gray-700">
+              <i class="fa-solid fa-globe text-[8px]"></i> All SIMs
+            </span>
+          `;
+        }
+
+        const clientCountBadge = `<span id="srv-count-${s.id}" class="text-[10px] text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-500/15 border border-brand-200 dark:border-brand-500/30 px-2 py-0.5 rounded-full font-mono"><i class="fa-solid fa-users mr-1"></i>Clients: checking...</span>`;
+        const srvRate = getRateForServer(s);
+
+        html += `
+          <div class="p-3.5 bg-gray-50 dark:bg-dark-800/80 rounded-2xl border border-gray-200 dark:border-gray-700/60 flex items-center justify-between gap-3 shadow-lg">
+            <div class="flex items-center gap-3">
+              ${flagElem}
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h4 class="text-xs font-bold text-gray-900 dark:text-white">${s.name}</h4>
+                  ${simBadge}
+                  ${clientCountBadge}
+                </div>
+                ${s.note ? `<p class="text-[10px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">${s.note}</p>` : ''}
+                <div class="flex items-center gap-2 mt-1">
+                  <span id="dynamic-rate-text-${s.id}" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Plan: ${srvRate} GB = 1฿ (1 Day / ${srvRate}GB)
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button onclick="openBuyModal('${s.id}')" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition shadow-md shadow-brand-600/30 shrink-0">
+              Buy Now
+            </button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      filteredServers.forEach(async (s) => {
+        try {
+          const res = await fetch(`${WORKER_API_BASE}/api/v2ray/server-stats`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              vaultToken: s.vaultToken,
+              serverUrl: s.panelUrl,
+              serverIp: s.serverIp || s.address || '',
+              username: s.username,
+              password: s.password,
+              inboundId: s.inboundId || 1
+            })
+          });
+          const data = await res.json();
+          const badge = document.getElementById(`srv-count-${s.id}`);
+          if (badge && data.success) {
+            badge.innerHTML = `<i class="fa-solid fa-users mr-1"></i>Clients: ${data.clientCount || 0}`;
+          } else if (badge) {
+            badge.innerHTML = `<i class="fa-solid fa-users mr-1"></i>Active`;
+          }
+        } catch (_) {
+          const badge = document.getElementById(`srv-count-${s.id}`);
+          if (badge) badge.innerHTML = `<i class="fa-solid fa-users mr-1"></i>Active`;
+        }
+      });
+    }
+
+    // OPEN BUY MODAL WITH DYNAMIC SERVER FLAG, NAME & SIM LOGO
+    window.openBuyModal = function(serverId) {
+      selectedServerToBuy = activeServersList.find(x => x.id === serverId);
+      if (!selectedServerToBuy) return showToast("Server not found", "error");
+
+      activeServerRate = getRateForServer(selectedServerToBuy);
+
+      // 1. Render Dynamic Flag in Modal
+      const flagImg = document.getElementById('buy-srv-flag-img');
+      const flagEmoji = document.getElementById('buy-srv-flag-emoji');
+      if (selectedServerToBuy.flagUrl && (selectedServerToBuy.flagUrl.startsWith('http://') || selectedServerToBuy.flagUrl.startsWith('https://'))) {
+        flagImg.src = selectedServerToBuy.flagUrl;
+        flagImg.classList.remove('hidden');
+        flagEmoji.classList.add('hidden');
+      } else {
+        flagEmoji.innerText = selectedServerToBuy.flag || '🌐';
+        flagEmoji.classList.remove('hidden');
+        flagImg.classList.add('hidden');
+      }
+
+      // 2. Set Server Name
+      document.getElementById('buy-srv-sub').innerText = selectedServerToBuy.name;
+      document.getElementById('buy-confirm-srv-name').innerText = selectedServerToBuy.name;
+
+      // 3. Render SIM Category Badge with Round Logo
+      const simKey = (selectedServerToBuy.simCategory || selectedServerToBuy.category || 'all').toLowerCase();
+      const simTagBox = document.getElementById('buy-sim-tag-box');
+      
+      let badgeHtml = '';
+      if (simKey.includes('dtac')) {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30">
+            <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+              <img src="${SIM_LOGOS.dtac}" alt="dtac" class="w-full h-full object-contain rounded-full" />
+            </span>
+            DTAC (${activeServerRate} GB/1฿)
+          </span>
+        `;
+      } else if (simKey.includes('true')) {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-500 border border-red-500/30">
+            <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+              <img src="${SIM_LOGOS.true}" alt="true" class="w-full h-full object-contain rounded-full" />
+            </span>
+            TRUE H (${activeServerRate} GB/1฿)
+          </span>
+        `;
+      } else if (simKey.includes('ais')) {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+            <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+              <img src="${SIM_LOGOS.ais}" alt="ais" class="w-full h-full object-contain rounded-full" />
+            </span>
+            AIS (${activeServerRate} GB/1฿)
+          </span>
+        `;
+      } else if (simKey.includes('myanmar') || simKey.includes('mm')) {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+            <span class="w-3.5 h-3.5 rounded-full bg-white p-0.5 inline-flex items-center justify-center overflow-hidden shrink-0">
+              <img src="${SIM_LOGOS.myanmar}" alt="mm" class="w-full h-full object-contain rounded-full" />
+            </span>
+            Myanmar All (${activeServerRate} GB/1฿)
+          </span>
+        `;
+      } else {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/15 text-brand-500 border border-brand-500/30">
+            <i class="fa-solid fa-globe text-[9px]"></i> ALL SIMs (${activeServerRate} GB/1฿)
+          </span>
+        `;
+      }
+      simTagBox.innerHTML = badgeHtml;
+      document.getElementById('buy-confirm-rate').innerText = `${activeServerRate} GB = 1฿`;
+
+      // 4. Configure GB Presets according to this server's specific rate
+      document.getElementById('preset-btn-1').innerText = `${activeServerRate} GB (1฿)`;
+      document.getElementById('preset-btn-1').setAttribute('onclick', `setVpnGbPreset(${activeServerRate})`);
+
+      document.getElementById('preset-btn-2').innerText = `${activeServerRate * 15} GB`;
+      document.getElementById('preset-btn-2').setAttribute('onclick', `setVpnGbPreset(${activeServerRate * 15})`);
+
+      document.getElementById('preset-btn-3').innerText = `${activeServerRate * 30} GB`;
+      document.getElementById('preset-btn-3').setAttribute('onclick', `setVpnGbPreset(${activeServerRate * 30})`);
+
+      document.getElementById('preset-btn-4').innerText = `${activeServerRate * 60} GB`;
+      document.getElementById('preset-btn-4').setAttribute('onclick', `setVpnGbPreset(${activeServerRate * 60})`);
+
+      // 5. Configure Range Slider
+      const slider = document.getElementById('vpn-gb-slider');
+      slider.min = activeServerRate;
+      slider.step = activeServerRate;
+      slider.max = activeServerRate * 100;
+      
+      setVpnGbPreset(activeServerRate * 10);
+      
+      document.getElementById('buy-client-name').value = `${currentUser.displayName || 'User'}-${Math.floor(100 + Math.random() * 900)}`;
+      document.getElementById('buy-my-balance').innerText = `${userBalance.toFixed(2)} THB`;
+      document.getElementById('modal-buy-vpn').style.display = 'flex';
+    };
+
+    window.closeBuyModal = function() {
+      document.getElementById('modal-buy-vpn').style.display = 'none';
+      selectedServerToBuy = null;
+    };
+
+    window.setVpnGbPreset = function(gb) {
+      document.getElementById('vpn-gb-slider').value = gb;
+      onVpnGbSliderChange(gb);
+    };
+
+    window.onVpnGbSliderChange = function(val) {
+      const rate = activeServerRate || 6;
+      currentSelectedGb = parseInt(val) || rate;
+      currentSelectedGb = Math.round(currentSelectedGb / rate) * rate;
+      if (currentSelectedGb < rate) currentSelectedGb = rate;
+
+      document.getElementById('slider-gb-val').innerText = `${currentSelectedGb} GB`;
+      document.getElementById('slider-gb-label').innerHTML = `<i class="fa-solid fa-database text-brand-600 dark:text-brand-400 mr-1.5"></i>Select GB Amount (${rate} GB = 1฿):`;
+      
+      const priceTHB = Math.max(1, Math.round(currentSelectedGb / rate * 100) / 100);
+      const daysDuration = Math.max(1, Math.ceil(currentSelectedGb / rate));
+
+      document.getElementById('slider-calc-price').innerText = `${priceTHB.toFixed(2)} THB`;
+      document.getElementById('slider-calc-duration').innerText = `${daysDuration} Days`;
+    };
+
+    function generateUuid() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    window.confirmPurchaseVpn = async function() {
+      if (!selectedServerToBuy) return;
+
+      const rate = activeServerRate || 6;
+      const price = Math.max(1, Math.round(currentSelectedGb / rate * 100) / 100);
+      const durationDays = Math.max(1, Math.ceil(currentSelectedGb / rate));
+      const remarkName = document.getElementById('buy-client-name').value.trim() || `User_${Date.now()}`;
+
+      if (userBalance < price) {
+        showUniversalAlert(
+          "Insufficient Balance",
+          `Required: ${price} THB | Your Balance: ${userBalance.toFixed(2)} THB. Please top up to proceed.`,
+          "fa-solid fa-triangle-exclamation text-amber-500",
+          "TopUp Now",
+          true,
+          () => { closeBuyModal(); switchView('topup'); }
+        );
+        return;
+      }
+
+      const clientUuid = generateUuid();
+      const srv = selectedServerToBuy;
+
+      try {
+        document.getElementById('global-loader').style.display = 'flex';
+        document.getElementById('loader-text').innerText = "Adding client to server...";
+
+        const workerRes = await fetch(`${WORKER_API_BASE}/api/v2ray/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vaultToken: srv.vaultToken, // Automated Vault Token
+            serverUrl: srv.panelUrl,
+            serverIp: srv.serverIp || srv.address || '', // Exact Real IP (e.g. 157.85.96.192)
+            username: srv.username,
+            password: srv.password,
+            inboundId: srv.inboundId || 1,
+            uuid: clientUuid,
+            totalGB: currentSelectedGb,
+            expireDays: durationDays,
+            remark: remarkName
+          })
+        });
+
+        const workerData = await workerRes.json();
+        if (!workerData.success) {
+          throw new Error(workerData.error || "Failed to add client (X-UI Connection Error)");
+        }
+
+        const realConfigLink = workerData.configLink;
+        const detectedProtocol = workerData.protocol || srv.protocol || 'vless';
+
+        const batch = db.batch();
+
+        const userRef = db.collection('users').doc(currentUser.uid);
+        batch.update(userRef, {
+          balance: firebase.firestore.FieldValue.increment(-price),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const txRef = db.collection('transactions').doc();
+        batch.set(txRef, {
+          userId: currentUser.uid,
+          type: 'vpn_purchase',
+          amount: -price,
+          currency: 'THB',
+          description: `V2RAY VPN: ${srv.name} (${currentSelectedGb} GB / ${durationDays} Days @ ${rate}GB/1฿)`,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const expireDateMillis = Date.now() + (durationDays * 86400000);
+        const accRef = db.collection('v2rayAccounts').doc();
+        batch.set(accRef, {
+          userId: currentUser.uid,
+          serverId: srv.id,
+          serverName: srv.name,
+          simCategory: srv.simCategory || 'all',
+          serverFlag: srv.flag || '🌐',
+          serverFlagUrl: srv.flagUrl || null,
+          inboundId: srv.inboundId || 1,
+          clientName: remarkName,
+          uuid: clientUuid,
+          protocol: detectedProtocol,
+          dataQuotaGB: currentSelectedGb,
+          price: price,
+          rateApplied: rate,
+          configLink: realConfigLink,
+          isOnline: false,
+          usedBytes: 0,
+          upBytes: 0,
+          downBytes: 0,
+          status: 'active',
+          expireAt: firebase.firestore.Timestamp.fromMillis(expireDateMillis),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await batch.commit();
+        closeBuyModal();
+
+        openConfigSuccessModal({
+          name: remarkName,
+          dataQuotaGB: currentSelectedGb,
+          expireDate: new Date(expireDateMillis).toLocaleDateString(),
+          configLink: realConfigLink
+        });
+
+        showUniversalAlert("Success", "V2RAY Account has been successfully created!", "fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400", "Okay", false, null);
+
+      } catch (err) {
+        showUniversalAlert("Error", err.message, "fa-solid fa-triangle-exclamation text-rose-500 dark:text-rose-400", "Close", false, null);
+      } finally {
+        document.getElementById('global-loader').style.display = 'none';
+      }
+    };
+
+    window.openConfigSuccessModal = function(data) {
+      document.getElementById('pop-success-name').innerText = data.name;
+      document.getElementById('pop-success-gb').innerText = `${data.dataQuotaGB} GB`;
+      document.getElementById('pop-success-exp').innerText = data.expireDate;
+      document.getElementById('pop-success-link-input').value = data.configLink;
+
+      const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.configLink)}`;
+      document.getElementById('pop-success-qr').src = qrApi;
+      document.getElementById('modal-config-success').style.display = 'flex';
+    };
+
+    window.closeConfigSuccessModal = function() {
+      document.getElementById('modal-config-success').style.display = 'none';
+      switchView('my-accounts');
+    };
+
+    window.copyPopSuccessLink = function() {
+      const link = document.getElementById('pop-success-link-input').value;
+      copyText(link, "V2RAY Config Link copied!");
+    };
+
+    function listenToMyVpnAccounts(uid) {
+      db.collection('v2rayAccounts')
+        .where('userId', '==', uid)
+        .onSnapshot(async (snap) => {
+          const count = snap.size;
+          document.getElementById('btn-acc-count').innerText = count;
+          document.getElementById('stat-active-vpn').innerText = count;
+          currentVpnAccountsDocs = snap.docs;
+          renderMyAccounts(currentVpnAccountsDocs);
+        });
+    }
+
+    function renderMyAccounts(docs) {
+      const container = document.getElementById('my-accounts-grid');
+      if (!docs || !docs.length) {
+        container.innerHTML = `
+          <div class="col-span-full glass-card rounded-2xl p-8 border border-gray-200 dark:border-gray-800 text-center space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-dark-800 text-gray-500 dark:text-gray-400 flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-inbox"></i></div>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">No purchased VPN accounts yet</h4>
+            <p class="text-xs text-gray-500">Go to Dashboard to buy a new V2RAY account.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      docs.forEach(d => {
+        const acc = d.data();
+        const accId = d.id;
+        const expStr = acc.expireAt ? new Date(acc.expireAt.toMillis()).toLocaleDateString() : 'Active';
+        const clientName = acc.clientName || acc.serverName;
+        const quotaGB = acc.dataQuotaGB || 60;
+
+        const cached = clientStatusCache[acc.uuid] || {};
+        const isOnline = cached.online !== undefined ? cached.online : (acc.isOnline || false);
+        const upBytes = cached.upBytes !== undefined ? cached.upBytes : (acc.upBytes || 0);
+        const downBytes = cached.downBytes !== undefined ? cached.downBytes : (acc.downBytes || 0);
+        const usedGB = cached.usedGB !== undefined ? cached.usedGB : ((acc.usedBytes || (upBytes + downBytes)) / (1024 * 1024 * 1024)).toFixed(3);
+        const usedPercent = Math.min(100, Math.max(2, (usedGB / quotaGB) * 100));
+
+        let flagElem = '';
+        if (acc.serverFlagUrl && (acc.serverFlagUrl.startsWith('http') || acc.serverFlagUrl.startsWith('https'))) {
+          flagElem = `
+            <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-brand-300 dark:border-brand-500/40 shadow shrink-0 flex items-center justify-center bg-gray-100 dark:bg-dark-900 p-0.5">
+              <img src="${acc.serverFlagUrl}" alt="flag" class="w-full h-full object-cover rounded-full" />
+            </div>
+          `;
+        } else {
+          flagElem = `
+            <div class="w-9 h-9 rounded-full border-2 border-brand-300 dark:border-brand-500/40 shadow shrink-0 flex items-center justify-center bg-gray-100 dark:bg-dark-900 text-lg">
+              ${acc.serverFlag || '🌐'}
+            </div>
+          `;
+        }
+
+        const statusBadge = isOnline ? `
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/40 flex items-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.35)]">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse-dot"></span> Online
+          </span>
+        ` : `
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500"></span> Offline
+          </span>
+        `;
+
+        html += `
+          <div class="glass-card rounded-2xl p-4 border border-brand-300 dark:border-brand-500/30 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                ${flagElem}
+                <div>
+                  <h4 class="text-xs font-bold text-gray-900 dark:text-white">${clientName}</h4>
+                  <p class="text-[10px] text-brand-600 dark:text-brand-500 font-mono uppercase font-bold">${acc.protocol} | ${acc.serverName}</p>
+                </div>
+              </div>
+              <div>${statusBadge}</div>
+            </div>
+
+            <div class="p-3 bg-gray-50 dark:bg-dark-950/70 rounded-xl space-y-2 text-xs">
+              
+              <div class="grid grid-cols-2 gap-2 pb-2 border-b border-gray-200 dark:border-gray-800/60 text-[11px]">
+                <div class="flex items-center gap-1.5 bg-white dark:bg-dark-900/80 p-1.5 rounded-lg border border-gray-200 dark:border-gray-800">
+                  <span class="text-rose-500 dark:text-rose-400 font-bold"><i class="fa-solid fa-arrow-up"></i></span>
+                  <div>
+                    <p class="text-[9px] text-gray-500 dark:text-gray-400 leading-tight">Byte Out (Upload)</p>
+                    <p class="font-mono font-bold text-gray-800 dark:text-gray-200 leading-tight">${formatBytes(upBytes)}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 bg-white dark:bg-dark-900/80 p-1.5 rounded-lg border border-gray-200 dark:border-gray-800">
+                  <span class="text-emerald-500 dark:text-emerald-400 font-bold"><i class="fa-solid fa-arrow-down"></i></span>
+                  <div>
+                    <p class="text-[9px] text-gray-500 dark:text-gray-400 leading-tight">Byte In (Download)</p>
+                    <p class="font-mono font-bold text-gray-800 dark:text-gray-200 leading-tight">${formatBytes(downBytes)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 dark:text-gray-400 text-[11px]"><i class="fa-solid fa-database text-brand-600 dark:text-brand-500 mr-1"></i>Total Usage:</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">${usedGB} GB / ${quotaGB} GB</span>
+              </div>
+              
+              <!-- Neon Glowing Animated Green Data Progress Bar -->
+              <div class="w-full bg-gray-200 dark:bg-dark-800/90 rounded-full h-2.5 overflow-hidden border border-gray-300 dark:border-gray-800/80 p-[1px]">
+                <div class="progress-neon-glow h-full rounded-full" style="width: ${usedPercent}%"></div>
+              </div>
+
+              <div class="flex justify-between items-center pt-1 border-t border-gray-200 dark:border-gray-800/60">
+                <span class="text-gray-600 dark:text-gray-400 text-[11px]"><i class="fa-regular fa-calendar text-emerald-600 dark:text-emerald-400 mr-1"></i>Expiration Date:</span>
+                <span class="font-semibold text-gray-800 dark:text-gray-200">${expStr}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1 border-t border-gray-200 dark:border-gray-800/60">
+              <button onclick="copyText('${acc.configLink}', 'V2RAY Config Link copied!')" class="flex-1 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md">
+                <i class="fa-regular fa-copy"></i> Copy Link
+              </button>
+              <button onclick="openConfigSuccessModal({ name: '${clientName}', dataQuotaGB: ${quotaGB}, expireDate: '${expStr}', configLink: '${acc.configLink}' })" class="px-2.5 py-2 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-qrcode"></i> QR
+              </button>
+              <button onclick="deleteMyAccount('${accId}', '${clientName}', '${acc.uuid}', '${acc.serverId}')" class="px-2.5 py-2 bg-rose-100 dark:bg-rose-600/20 hover:bg-rose-200 dark:hover:bg-rose-600 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-white border border-rose-300 dark:border-rose-500/30 rounded-xl text-xs font-semibold flex items-center gap-1 transition" title="Delete Account">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.deleteMyAccount = function(accId, name, uuid, serverId) {
+      showUniversalAlert(
+        "Confirm Delete",
+        `Are you sure you want to permanently delete account "${name}"?`,
+        "fa-solid fa-triangle-exclamation text-rose-500 dark:text-rose-500",
+        "Delete Account",
+        true,
+        async () => {
+          try {
+            document.getElementById('global-loader').style.display = 'flex';
+            document.getElementById('loader-text').innerText = "Deleting account...";
+
+            await db.collection('v2rayAccounts').doc(accId).delete();
+
+            const srv = activeServersList.find(s => s.id === serverId);
+            if (srv) {
+              fetch(`${WORKER_API_BASE}/api/v2ray/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  vaultToken: srv.vaultToken,
+                  serverUrl: srv.panelUrl,
+                  serverIp: srv.serverIp || srv.address || '',
+                  username: srv.username,
+                  password: srv.password,
+                  inboundId: srv.inboundId || 1,
+                  uuid: uuid
+                })
+              }).catch(() => {});
+            }
+
+            showToast(`Account "${name}" deleted successfully`, "success");
+          } catch (err) {
+            showToast("Delete Error: " + err.message, "error");
+          } finally {
+            document.getElementById('global-loader').style.display = 'none';
+          }
+        }
+      );
+    };
+
+    window.refreshAllClientStatus = async function(silent = false) {
+      const icon = document.getElementById('btn-refresh-icon');
+      if (!silent) {
+        if (icon) icon.classList.add('animate-spin');
+      }
+
+      for (const s of activeServersList) {
+        try {
+          const res = await fetch(`${WORKER_API_BASE}/api/v2ray/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              vaultToken: s.vaultToken,
+              serverUrl: s.panelUrl,
+              serverIp: s.serverIp || s.address || '',
+              username: s.username,
+              password: s.password,
+              inboundId: s.inboundId || 1
+            })
+          });
+          const d = await res.json();
+          if (d.success && Array.isArray(d.clients)) {
+            d.clients.forEach(c => {
+              clientStatusCache[c.uuid] = { 
+                online: c.online, 
+                upBytes: c.upBytes || 0,
+                downBytes: c.downBytes || 0,
+                usedGB: c.usedGB 
+              };
+            });
+          }
+        } catch (_) {}
+      }
+
+      if (currentVpnAccountsDocs.length) {
+        renderMyAccounts(currentVpnAccountsDocs);
+      }
+
+      if (!silent) {
+        if (icon) icon.classList.remove('animate-spin');
+        showToast("Status sync complete", "success");
+      }
+    };
+
+    function startAutoStatusPolling() {
+      if (statusPollingTimer) clearInterval(statusPollingTimer);
+      statusPollingTimer = setInterval(() => {
+        if (currentUser && activeServersList.length > 0 && currentVpnAccountsDocs.length > 0) {
+          refreshAllClientStatus(true);
+        }
+        syncUserBalance(false);
+      }, 3000);
+    }
+
+    window.generatePaymentRequest = async function() {
+      const amt = parseFloat(document.getElementById('topup-amount-input').value);
+      if (isNaN(amt) || amt <= 0) return showToast("Please enter a valid amount", "error");
+
+      const paymentId = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+      currentPendingRequestId = paymentId;
+
+      try {
+        document.getElementById('global-loader').style.display = 'flex';
+        await db.collection('topupRequests').doc(paymentId).set({
+          paymentId: paymentId,
+          userId: currentUser.uid,
+          displayName: currentUser.displayName || 'User',
+          email: currentUser.email,
+          amount: amt,
+          currency: 'THB',
+          status: 'pending',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById('current-payment-id').innerText = paymentId;
+        document.getElementById('display-transfer-amount').innerText = amt.toFixed(2) + ' THB';
+        document.getElementById('topup-step-1').style.display = 'none';
+        document.getElementById('topup-step-2').style.display = 'block';
+        showToast("Payment request created. Please upload slip.", "info");
+      } catch(err) {
+        showToast("Error: " + err.message, "error");
+      } finally {
+        document.getElementById('global-loader').style.display = 'none';
+      }
+    };
+
+    window.cancelTopUpStep2 = function() {
+      currentPendingRequestId = null;
+      removeSlipPreview();
+      document.getElementById('topup-step-2').style.display = 'none';
+      document.getElementById('topup-step-1').style.display = 'block';
+    };
+
+    window.handleSlipFileSelect = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 800;
+          let width = img.width, height = img.height;
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          selectedSlipBase64 = canvas.toDataURL('image/jpeg', 0.75);
+          document.getElementById('slip-preview-img').src = selectedSlipBase64;
+          document.getElementById('slip-upload-placeholder').style.display = 'none';
+          document.getElementById('slip-preview-container').style.display = 'block';
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.removeSlipPreview = function() {
+      selectedSlipBase64 = null;
+      document.getElementById('slip-file-input').value = '';
+      document.getElementById('slip-preview-img').src = '';
+      document.getElementById('slip-preview-container').style.display = 'none';
+      document.getElementById('slip-upload-placeholder').style.display = 'block';
+    };
+
+    window.submitPaymentSlip = async function() {
+      if (!currentPendingRequestId || !selectedSlipBase64) return showToast("Please select a slip image", "error");
+      try {
+        document.getElementById('global-loader').style.display = 'flex';
+        await db.collection('topupRequests').doc(currentPendingRequestId).update({
+          slipUrl: selectedSlipBase64,
+          status: 'pending',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast("Slip submitted successfully!", "success");
+
+        const botToken = "8251966729:AAEoKwo_1qCPFhmotM9VXTErds2hKxBE57s"; 
+        const chatId = "7848197948";   
+        const amt = document.getElementById('display-transfer-amount').innerText; 
+        const userName = currentUser.displayName || "User";
+        
+        const message = `🔔 *New TopUp Request*\n\n👤 User: ${userName}\n💰 Amount: ${amt}\n🆔 Payment ID: ${currentPendingRequestId}\n\nPlease check the Admin Panel.`;
+
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        }).catch(e => console.log("Telegram alert failed"));
+
+        cancelTopUpStep2();
+      } catch(err) { showToast(err.message, "error"); }
+      finally { document.getElementById('global-loader').style.display = 'none'; }
+    };
+
+    window.confirmDeleteAllHistory = function() {
+      showUniversalAlert(
+        "Delete All Records",
+        "Are you sure you want to permanently delete all your top-up history?",
+        "fa-solid fa-triangle-exclamation text-rose-500 dark:text-rose-500",
+        "Delete All",
+        true,
+        async () => {
+          try {
+            document.getElementById('global-loader').style.display = 'flex';
+            const snap = await db.collection('topupRequests').where('userId', '==', currentUser.uid).get();
+            const batch = db.batch();
+            snap.forEach(doc => {
+              batch.delete(doc.ref);
+            });
+            await batch.commit();
+            showToast("All top-up history deleted successfully", "success");
+          } catch(err) {
+            showToast("Error: " + err.message, "error");
+          } finally {
+            document.getElementById('global-loader').style.display = 'none';
+          }
+        }
+      );
+    };
+
+    function listenToTopUpHistory(uid) {
+      db.collection('topupRequests')
+        .where('userId', '==', uid)
+        .onSnapshot((snapshot) => {
+          if (!isInitialTopUpLoad) {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'modified') {
+                const d = change.doc.data();
+                if (d.status === 'approved' && !processedApprovedTxIds.has(change.doc.id)) {
+                  processedApprovedTxIds.add(change.doc.id);
+                  triggerTopUpCelebration(d.amount, d.paymentId || change.doc.id);
+                }
+              }
+            });
+          } else {
+            isInitialTopUpLoad = false;
+            snapshot.docs.forEach(doc => {
+              if (doc.data().status === 'approved') processedApprovedTxIds.add(doc.id);
+            });
+          }
+
+          const container = document.getElementById('topup-history-list');
+          document.getElementById('history-count').innerText = `${snapshot.size} Items`;
+          if (snapshot.empty) {
+            container.innerHTML = `<div class="text-center py-10 text-gray-500 dark:text-gray-400"><i class="fa-solid fa-receipt text-3xl mb-2"></i><p class="text-xs">No top-up history yet</p></div>`;
+            return;
+          }
+          let html = '';
+          const docs = snapshot.docs.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
+          docs.forEach((doc) => {
+            const data = doc.data();
+            const dateStr = data.createdAt ? new Date(data.createdAt.toMillis()).toLocaleString() : 'Just now';
+            let statusBadge = data.status === 'approved' ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border border-emerald-300 dark:border-emerald-500/20">Approved</span>` :
+                              data.status === 'rejected' ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-500 border border-rose-300 dark:border-rose-500/20">Rejected</span>` :
+                              `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-300 dark:border-amber-500/20">Pending</span>`;
+
+            const singleDeleteBtn = `<button onclick="deletePayment('${doc.id}')" title="Delete record" class="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-600/30 text-gray-500 dark:text-gray-400 dark:hover:text-white rounded-lg transition text-[11px] ml-1"><i class="fa-solid fa-trash"></i></button>`;
+
+            html += `
+              <div class="p-3.5 bg-gray-50 dark:bg-dark-800/80 rounded-xl border border-gray-200 dark:border-gray-700/60 space-y-2 relative group">
+                <div class="flex items-center justify-between">
+                  <div><span class="text-xs font-mono font-bold text-gray-900 dark:text-white">${data.paymentId || doc.id}</span><p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">${dateStr}</p></div>
+                  <div class="text-right flex flex-col items-end">
+                    <p class="text-xs font-bold text-emerald-600 dark:text-emerald-500">+${(data.amount || 0).toFixed(2)} ${data.currency || 'THB'}</p>
+                    <div class="mt-1 flex items-center gap-1">${statusBadge}${singleDeleteBtn}</div>
+                  </div>
+                </div>
+                ${data.slipUrl ? `<div class="pt-1.5 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center text-[11px]"><span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-paperclip mr-1"></i>Slip Uploaded</span><button type="button" onclick="openSlipModal('${data.slipUrl}')" class="text-brand-600 dark:text-brand-500 font-bold">View</button></div>` : ''}
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        });
+    }
+
+    window.deletePayment = async function(id) {
+      if (!confirm("Are you sure you want to delete this payment record?")) return;
+      try {
+        await db.collection('topupRequests').doc(id).delete();
+        showToast("Record deleted", "success");
+      } catch(e) {
+        showToast("Error: " + e.message, "error");
+      }
+    };
+
+    window.openSlipModal = function(url) {
+      document.getElementById('modal-slip-img').src = url;
+      document.getElementById('modal-slip-preview').style.display = 'flex';
+    };
+    window.closeSlipModal = function() {
+      document.getElementById('modal-slip-preview').style.display = 'none';
+      document.getElementById('modal-slip-img').src = '';
+    };
+
+    window.openQrModal = function(url, title) {
+      document.getElementById('qr-modal-title').innerHTML = `<i class="fa-solid fa-qrcode text-brand-600 dark:text-brand-400 mr-2"></i>${title || 'Scan QR Code'}`;
+      document.getElementById('qr-modal-img').src = url;
+      document.getElementById('modal-qr-preview').style.display = 'flex';
+    };
+    window.closeQrModal = function() {
+      document.getElementById('modal-qr-preview').style.display = 'none';
+      document.getElementById('modal-qr-img').src = '';
+    };
+
+    window.handleEmailPasswordLogin = async function(e) {
+      e.preventDefault();
+      try { await auth.signInWithEmailAndPassword(document.getElementById('login-email').value.trim(), document.getElementById('login-password').value); }
+      catch(err) { showUniversalAlert("Login Failed", err.message, "fa-solid fa-triangle-exclamation text-rose-500 dark:text-rose-500", "Close", false, null); }
+    };
+    window.handleEmailPasswordRegister = async function(e) {
+      e.preventDefault();
+      const em = document.getElementById('register-email').value.trim();
+      const pw = document.getElementById('register-password').value;
+      if (pw !== document.getElementById('register-confirm-password').value) return showUniversalAlert("Password Mismatch", "The two passwords you entered do not match.", "fa-solid fa-triangle-exclamation text-amber-500 dark:text-amber-500", "Fix", false, null);
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(em, pw);
+        await cred.user.updateProfile({ displayName: document.getElementById('register-name').value.trim() });
+      } catch(err) { showUniversalAlert("Registration Failed", err.message, "fa-solid fa-triangle-exclamation text-rose-500 dark:text-rose-500", "Close", false, null); }
+    };
+    window.handleGoogleSignIn = async function() {
+      try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+      catch(err) { showUniversalAlert("Google Login Error", err.message, "fa-solid fa-triangle-exclamation text-rose-500 dark:text-rose-500", "Close", false, null); }
+    };
+    window.handleForgotPassword = async function(e) {
+      e.preventDefault();
+      try {
+        await auth.sendPasswordResetEmail(document.getElementById('forgot-email').value.trim());
+        showUniversalAlert("Success", "Password Reset Link has been sent. Please check your email.", "fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400", "Okay", false, null);
+        switchAuthTab('login');
+      } catch(err) { showUniversalAlert("Error", err.message, "fa-solid fa-triangle-exclamation text-rose-500 dark:text-rose-500", "Close", false, null); }
+    };
+
+    window.handleLogout = function() {
+      showUniversalAlert(
+        "Logout",
+        "Are you sure you want to log out of your account?",
+        "fa-solid fa-right-from-bracket text-amber-500 dark:text-amber-500",
+        "Logout",
+        true,
+        () => { 
+          if (auth) {
+            document.getElementById('global-loader').style.display = 'flex';
+            document.getElementById('loader-text').innerText = "Logging out...";
+            auth.signOut().then(() => {
+              window.location.reload();
+            }).catch(e => {
+              document.getElementById('global-loader').style.display = 'none';
+              showToast("Logout failed: " + e.message, "error");
+            });
+          } 
+        }
+      );
+    };
+  </script>
+</body>
+</html>
