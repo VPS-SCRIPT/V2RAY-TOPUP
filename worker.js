@@ -1,0 +1,475 @@
+/**
+ * V2RAY TOPUP & VPN SECURE WORKER - AUTOMATED VAULT & EXACT INBOUND MATCHER
+ * -------------------------------------------------------------------------
+ * FIXED: Inbound Client Delete API Route (Support 3x-ui, x-ui, MHSanaei & alireza)
+ */
+
+const VAULT_MASTER_KEY = "ACTIVE_VPN_SECURE_VAULT_KEY_2026_SUPER_SAFE";
+
+export default {
+  async fetch(req, env) {
+    const cors = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Content-Type': 'application/json'
+    };
+
+    if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+
+    const url = new URL(req.url);
+
+    if (url.pathname === '/' || url.pathname === '/api/health') {
+      return new Response(JSON.stringify({ status: 'online', automatedVault: true }), { headers: cors });
+    }
+
+    const cleanUrl = (u) => (u || '').trim().replace(/\/+$/, '').replace(/\/login\/?$/, '');
+
+    async function getCryptoKey() {
+      const enc = new TextEncoder();
+      const keyData = enc.encode(VAULT_MASTER_KEY.padEnd(32, '0').slice(0, 32));
+      return await crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    }
+
+    async function sealCredentials(dataObj) {
+      const key = await getCryptoKey();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encoded = new TextEncoder().encode(JSON.stringify(dataObj));
+      const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+
+      const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+      combined.set(iv, 0);
+      combined.set(new Uint8Array(ciphertext), iv.length);
+
+      let binary = '';
+      const len = combined.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(combined[i]);
+      }
+      return btoa(binary);
+    }
+
+    async function unsealCredentials(token) {
+      try {
+        const binary = atob(token);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const iv = bytes.slice(0, 12);
+        const data = bytes.slice(12);
+        const key = await getCryptoKey();
+        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+        return JSON.parse(new TextDecoder().decode(decrypted));
+      } catch (_) {
+        throw new Error("Invalid or corrupted server token");
+      }
+    }
+
+    async function resolveServerCredentials(body) {
+      if (body.vaultToken) {
+        const unsealed = await unsealCredentials(body.vaultToken);
+        return {
+          serverUrl: unsealed.panelUrl,
+          serverIp: body.serverIp || unsealed.serverIp || '',
+          username: unsealed.username,
+          password: unsealed.password,
+          inboundId: body.inboundId || unsealed.inboundId || 1
+        };
+      }
+      return {
+        serverUrl: body.serverUrl,
+        serverIp: body.serverIp || '',
+        username: body.username,
+        password: body.password,
+        inboundId: parseInt(body.inboundId) || 1
+      };
+    }
+
+    async function loginXui(panelUrl, username, password) {
+      if (!panelUrl || !username || !password) {
+        throw new Error('Server credentials (URL, Username, Password) မပြည့်စုံပါ');
+      }
+
+      const base = cleanUrl(panelUrl);
+      const res = await fetch(`${base}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ username, password }),
+        redirect: 'manual'
+      });
+
+      let cookie = '';
+      if (typeof res.headers.getSetCookie === 'function') {
+        cookie = res.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
+      } else {
+        const raw = res.headers.get('set-cookie');
+        if (raw) cookie = raw.split(';')[0];
+      }
+
+      if (res.status >= 400 || !cookie) {
+        throw new Error('X-UI Login မအောင်မြင်ပါ (Credentials စစ်ဆေးပါ)');
+      }
+      return { base, cookie };
+    }
+
+    async function getInbound(base, cookie, targetId) {
+      const endpoints = [
+        `${base}/panel/api/inbounds/list`,
+        `${base}/xui/API/inbounds/`
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const r = await fetch(ep, { headers: { 'Cookie': cookie, 'Accept': 'application/json' } });
+          const d = await r.json().catch(() => null);
+          if (d && d.success && Array.isArray(d.obj)) {
+            const match = d.obj.find(i => Number(i.id) === Number(targetId));
+            if (match) {
+              const prefix = ep.includes('/xui/API/') ? `${base}/xui/API/inbounds` : `${base}/panel/api/inbounds`;
+              return { inb: match, prefix, allInbounds: d.obj };
+            }
+          }
+        } catch (_) {}
+      }
+      throw new Error(`Inbound #${targetId} ရှာမတွေ့ပါ`);
+    }
+
+    function buildExactConfig(inb, uuid, remark, targetServerHost) {
+      const proto = (inb.protocol || 'vless').toLowerCase();
+      const stream = typeof inb.streamSettings === 'string' ? JSON.parse(inb.streamSettings) : (inb.streamSettings || {});
+      const net = stream.network || 'ws';
+      const sec = stream.security || 'tls';
+      const name = encodeURIComponent(remark || inb.remark || 'V2RAY');
+
+      if (proto === 'vless') {
+        const p = new URLSearchParams();
+        const wsPath = stream.wsSettings?.path || '/';
+        p.set('path', wsPath);
+        p.set('security', sec);
+
+        if (sec === 'tls') {
+          const alpnArr = stream.tlsSettings?.alpn;
+          const alpnVal = Array.isArray(alpnArr) && alpnArr.length > 0 ? alpnArr.join(',') : 'http/1.1';
+          p.set('alpn', alpnVal);
+        }
+
+        p.set('encryption', 'none');
+        p.set('insecure', '1');
+
+        const hostHeader = stream.wsSettings?.headers?.Host || targetServerHost;
+        p.set('host', hostHeader);
+
+        const fpVal = stream.tlsSettings?.settings?.fingerprint || stream.tlsSettings?.fingerprint || 'android';
+        p.set('fp', fpVal);
+        p.set('type', net);
+        p.set('allowInsecure', '1');
+
+        const sniVal = stream.tlsSettings?.serverName || stream.realitySettings?.serverNames?.[0] || '';
+        if (sniVal) {
+          p.set('sni', sniVal);
+        }
+
+        return `vless://${uuid}@${targetServerHost}:${inb.port}?${p.toString()}#${name}`;
+      }
+
+      if (proto === 'vmess') {
+        const vmess = {
+          v: "2",
+          ps: remark || inb.remark,
+          add: targetServerHost,
+          port: inb.port,
+          id: uuid,
+          aid: "0",
+          scy: "auto",
+          net: net,
+          type: "none",
+          host: stream.wsSettings?.headers?.Host || targetServerHost,
+          path: stream.wsSettings?.path || "/",
+          tls: sec === 'tls' ? "tls" : "",
+          sni: stream.tlsSettings?.serverName || ""
+        };
+        return "vmess://" + btoa(unescape(encodeURIComponent(JSON.stringify(vmess))));
+      }
+
+      return `trojan://${uuid}@${targetServerHost}:${inb.port}?type=${net}&security=${sec}#${name}`;
+    }
+
+    // ENDPOINT 0: VAULT SEAL
+    if (url.pathname === '/api/admin/vault/seal' && req.method === 'POST') {
+      try {
+        const b = await req.json();
+        const { panelUrl, serverIp, username, password, inboundId } = b;
+        if (!panelUrl || !username || !password) {
+          throw new Error("Panel URL, Username နှင့် Password မပြည့်စုံပါ");
+        }
+        const vaultToken = await sealCredentials({ panelUrl, serverIp: serverIp || '', username, password, inboundId });
+        return new Response(JSON.stringify({ success: true, vaultToken }), { headers: cors });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 400, headers: cors });
+      }
+    }
+
+    // ENDPOINT 1: CREATE VPN CLIENT
+    if (url.pathname === '/api/v2ray/create' && req.method === 'POST') {
+      try {
+        const b = await req.json();
+        const { serverUrl, serverIp, username, password, inboundId } = await resolveServerCredentials(b);
+        const { uuid, totalGB, expireDays, remark } = b;
+
+        if (!uuid) throw new Error("UUID ထည့်သွင်းရန် လိုအပ်ပါသည်");
+
+        const { base, cookie } = await loginXui(serverUrl, username, password);
+        const inbId = parseInt(inboundId) || 1;
+        const { inb, prefix } = await getInbound(base, cookie, inbId);
+
+        const expiryTime = Date.now() + (expireDays || 30) * 86400000;
+        const totalBytes = (totalGB || 60) * 1024 * 1024 * 1024;
+        const clientEmail = (remark || `user_${uuid.slice(0, 6)}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+
+        const proto = (inb.protocol || 'vless').toLowerCase();
+        const stream = typeof inb.streamSettings === 'string' ? JSON.parse(inb.streamSettings) : (inb.streamSettings || {});
+        const sec = stream.security || 'none';
+
+        let client = {
+          email: clientEmail,
+          totalGB: totalBytes,
+          expiryTime,
+          enable: true,
+          limitIp: 0
+        };
+
+        if (proto === 'trojan') {
+          client.password = uuid;
+        } else {
+          client.id = uuid;
+          if (proto === 'vless' && sec === 'reality') {
+            client.flow = 'xtls-rprx-vision';
+          }
+          if (proto === 'vmess') client.alterId = 0;
+        }
+
+        const addRes = await fetch(`${prefix}/addClient`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
+          body: JSON.stringify({ id: inbId, settings: JSON.stringify({ clients: [client] }) })
+        });
+
+        const addData = await addRes.json().catch(() => ({}));
+        if (addData.success === false) {
+          throw new Error(`Inbound ထဲ Client ထည့်မရပါ: ${addData.msg || 'X-UI Error'}`);
+        }
+
+        let targetHost = (serverIp || b.serverIp || '').trim();
+        if (!targetHost) {
+          try {
+            targetHost = new URL(serverUrl).hostname;
+          } catch (_) {
+            targetHost = (serverUrl || '').replace(/https?:\/\//, '').split(':')[0].split('/')[0];
+          }
+        }
+
+        const configLink = buildExactConfig(inb, uuid, remark, targetHost);
+        return new Response(JSON.stringify({ success: true, configLink, protocol: proto, clientEmail }), { headers: cors });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 400, headers: cors });
+      }
+    }
+
+    // =========================================================================
+    // ENDPOINT 2: DELETE CLIENT (FIXED: Supports exact /:id/delClient/:clientId)
+    // =========================================================================
+    if (url.pathname === '/api/v2ray/delete' && req.method === 'POST') {
+      try {
+        const b = await req.json();
+        const { serverUrl, username, password, inboundId } = await resolveServerCredentials(b);
+        const { uuid } = b;
+
+        if (!uuid) throw new Error("UUID is required for deletion");
+
+        const { base, cookie } = await loginXui(serverUrl, username, password);
+        const inbId = parseInt(inboundId) || 1;
+        const { inb, prefix } = await getInbound(base, cookie, inbId);
+
+        let deletedSuccessfully = false;
+
+        // 1. Try Standard 3x-ui endpoint: POST ${prefix}/${inbId}/delClient/${uuid}
+        try {
+          const res1 = await fetch(`${prefix}/${inbId}/delClient/${encodeURIComponent(uuid)}`, {
+            method: 'POST',
+            headers: { 'Cookie': cookie, 'Accept': 'application/json' }
+          });
+          const d1 = await res1.json().catch(() => null);
+          if (d1 && d1.success) deletedSuccessfully = true;
+        } catch (_) {}
+
+        // 2. Try Alternative endpoint: POST ${prefix}/delClient/${uuid}
+        if (!deletedSuccessfully) {
+          try {
+            const res2 = await fetch(`${prefix}/delClient/${encodeURIComponent(uuid)}`, {
+              method: 'POST',
+              headers: { 'Cookie': cookie, 'Accept': 'application/json' }
+            });
+            const d2 = await res2.json().catch(() => null);
+            if (d2 && d2.success) deletedSuccessfully = true;
+          } catch (_) {}
+        }
+
+        // 3. Fallback: Parse inbound settings, filter out client, and save via update
+        if (!deletedSuccessfully) {
+          try {
+            const settings = typeof inb.settings === 'string' ? JSON.parse(inb.settings) : (inb.settings || {});
+            if (Array.isArray(settings.clients)) {
+              const prevLen = settings.clients.length;
+              settings.clients = settings.clients.filter(c => {
+                const cId = (c.id || c.password || '').toLowerCase().trim();
+                return cId !== uuid.toLowerCase().trim();
+              });
+
+              if (settings.clients.length < prevLen) {
+                // Client found and removed, now update inbound
+                inb.settings = JSON.stringify(settings);
+                await fetch(`${prefix}/update/${inbId}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
+                  body: JSON.stringify(inb)
+                });
+                deletedSuccessfully = true;
+              }
+            }
+          } catch (_) {}
+        }
+
+        return new Response(JSON.stringify({ success: true, deleted: deletedSuccessfully }), { headers: cors });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 400, headers: cors });
+      }
+    }
+
+    // ENDPOINT 3: SERVER STATS
+    if (url.pathname === '/api/v2ray/server-stats' && req.method === 'POST') {
+      try {
+        const b = await req.json();
+        const { serverUrl, username, password, inboundId } = await resolveServerCredentials(b);
+
+        const { base, cookie } = await loginXui(serverUrl, username, password);
+        const { inb } = await getInbound(base, cookie, parseInt(inboundId) || 1);
+
+        const settings = typeof inb.settings === 'string' ? JSON.parse(inb.settings) : (inb.settings || {});
+        const clientCount = (settings.clients || inb.clientStats || []).length;
+
+        return new Response(JSON.stringify({ success: true, clientCount, port: inb.port }), { headers: cors });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 400, headers: cors });
+      }
+    }
+
+    // ENDPOINT 4: LIVE STATUS
+    if (url.pathname === '/api/v2ray/status' && req.method === 'POST') {
+      try {
+        const b = await req.json();
+        const { serverUrl, username, password, inboundId } = await resolveServerCredentials(b);
+
+        const { base, cookie } = await loginXui(serverUrl, username, password);
+        const inbId = parseInt(inboundId) || 1;
+        const { inb, prefix } = await getInbound(base, cookie, inbId);
+
+        const onlineSet = new Set();
+        const onlineEndpoints = [
+          { url: `${prefix}/onlines`, method: 'POST' },
+          { url: `${base}/panel/api/inbounds/onlines`, method: 'POST' },
+          { url: `${prefix}/onlines`, method: 'GET' }
+        ];
+
+        for (const ep of onlineEndpoints) {
+          try {
+            const onlinesRes = await fetch(ep.url, {
+              method: ep.method,
+              headers: { 'Cookie': cookie, 'Accept': 'application/json' }
+            });
+            const onlinesData = await onlinesRes.json().catch(() => null);
+            if (onlinesData && onlinesData.success && onlinesData.obj) {
+              if (Array.isArray(onlinesData.obj)) {
+                onlinesData.obj.forEach(item => {
+                  if (typeof item === 'string') onlineSet.add(item.toLowerCase().trim());
+                  else if (item && typeof item === 'object') {
+                    if (item.email) onlineSet.add(String(item.email).toLowerCase().trim());
+                    if (item.uuid) onlineSet.add(String(item.uuid).toLowerCase().trim());
+                    if (item.id) onlineSet.add(String(item.id).toLowerCase().trim());
+                  }
+                });
+              } else if (typeof onlinesData.obj === 'object') {
+                Object.keys(onlinesData.obj).forEach(k => onlineSet.add(k.toLowerCase().trim()));
+              }
+              if (onlineSet.size > 0) break;
+            }
+          } catch (_) {}
+        }
+
+        const settings = typeof inb.settings === 'string' ? JSON.parse(inb.settings) : (inb.settings || {});
+        const clientsList = settings.clients || [];
+        const clientStats = inb.clientStats || [];
+
+        const statsMap = new Map();
+        clientStats.forEach(s => {
+          if (s.email) {
+            const em = String(s.email).toLowerCase().trim();
+            statsMap.set(em, s);
+            statsMap.set(em.replace(/[\s_-]+/g, ''), s);
+            statsMap.set(em.replace(/\s+/g, '_'), s);
+          }
+          if (s.uuid) statsMap.set(String(s.uuid).toLowerCase().trim(), s);
+          if (s.id) statsMap.set(String(s.id).toLowerCase().trim(), s);
+        });
+
+        const now = Date.now();
+        const ONLINE_GRACE_PERIOD_MS = 5 * 60 * 1000;
+
+        const clients = await Promise.all(clientsList.map(async (c) => {
+          const rawUuid = c.id || c.password || '';
+          const rawEmail = c.email || '';
+          const uuid = rawUuid.toLowerCase().trim();
+          const email = rawEmail.toLowerCase().trim();
+          const emailClean = email.replace(/[\s_-]+/g, '');
+          const emailUnderscore = email.replace(/\s+/g, '_');
+
+          const st = statsMap.get(email) || 
+                     statsMap.get(emailUnderscore) || 
+                     statsMap.get(emailClean) || 
+                     statsMap.get(uuid) || {};
+
+          const up = Number(st.up !== undefined ? st.up : (c.up || 0));
+          const down = Number(st.down !== undefined ? st.down : (c.down || 0));
+          const lastOnlineTimestamp = Number(st.lastOnline || c.lastOnline || 0);
+
+          let isOnline = onlineSet.has(email) || 
+                         onlineSet.has(emailUnderscore) || 
+                         onlineSet.has(emailClean) || 
+                         onlineSet.has(uuid);
+
+          if (!isOnline && lastOnlineTimestamp > 0) {
+            if ((now - lastOnlineTimestamp) <= ONLINE_GRACE_PERIOD_MS) {
+              isOnline = true;
+            }
+          }
+
+          return {
+            uuid: rawUuid,
+            email: rawEmail,
+            online: isOnline,
+            upBytes: up,
+            downBytes: down,
+            usedBytes: up + down,
+            usedGB: ((up + down) / (1024 * 1024 * 1024)).toFixed(3)
+          };
+        }));
+
+        return new Response(JSON.stringify({ success: true, clients }), { headers: cors });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 400, headers: cors });
+      }
+    }
+
+    return new Response(JSON.stringify({ message: "Worker ready" }), { headers: cors });
+  }
+};
