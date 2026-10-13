@@ -1,0 +1,98 @@
+{
+  "id": "/",
+  "name": "V2RAY TopUp & VPN Portal",
+  "short_name": "V2RAY Portal",
+  "description": "High Speed V2RAY VPN TopUp & Account Management Portal",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "TopUp",
+      "short_name": "TopUp",
+      "url": "./index.html#topup",
+      "icons": [
+        {
+          "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My Accounts",
+      "short_name": "Accounts",
+      "url": "./index.html#my-accounts",
+      "icons": [
+        {
+          "src": "https://raw.githubusercontent.com/VPS-SCRIPT/V2RAY-PANEL/main/v2ray.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
